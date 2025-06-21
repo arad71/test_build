@@ -267,6 +267,211 @@ const BuildingApprovalSystem = () => {
     ]
   };
 
+  // Enhanced document analysis requirements
+  const documentAnalysisRequirements = {
+    'Floor Plans': {
+      requiredElements: [
+        'Room labels and dimensions',
+        'Door and window openings',
+        'Structural elements (walls, columns)',
+        'Staircase details and dimensions',
+        'Kitchen and bathroom layouts',
+        'Building area calculations',
+        'Accessibility compliance paths',
+        'Fire exit routes',
+        'North point indicator',
+        'Scale notation (1:100 or similar)'
+      ],
+      complianceChecks: [
+        'Minimum room sizes (bedrooms ≥ 9m², living ≥ 12m²)',
+        'Corridor widths ≥ 1000mm',
+        'Door widths ≥ 850mm (accessibility)',
+        'Ceiling heights ≥ 2400mm',
+        'Window-to-floor ratio ≥ 10%',
+        'Bathroom ventilation requirements',
+        'Kitchen workspace triangle compliance',
+        'Fire egress path compliance'
+      ]
+    },
+    'Elevations': {
+      requiredElements: [
+        'Building height dimensions',
+        'Ground and floor levels',
+        'Roof pitch and materials',
+        'Window and door details',
+        'External finishes specification',
+        'Chimney and vent details',
+        'Driveway and path connections',
+        'Boundary fence locations',
+        'North, South, East, West elevations',
+        'Cross-section references'
+      ],
+      complianceChecks: [
+        'Maximum building height compliance',
+        'Roof pitch requirements (min 15°)',
+        'Window head heights ≥ 2100mm',
+        'External finish compatibility',
+        'Neighborhood character consistency',
+        'Privacy screening requirements',
+        'Solar access provisions',
+        'Weather protection adequacy'
+      ]
+    },
+    'Landscape Plan': {
+      requiredElements: [
+        'Existing vegetation survey',
+        'Proposed plantings with species',
+        'Irrigation system design',
+        'Drainage and stormwater management',
+        'Paved areas and materials',
+        'Fencing and boundary treatments',
+        'Outdoor lighting plan',
+        'Tree protection zones',
+        'Maintenance access paths',
+        'Native species integration'
+      ],
+      complianceChecks: [
+        'Minimum landscaping percentage',
+        'Tree canopy coverage requirements',
+        'Native species ratio ≥ 60%',
+        'Water-wise plant selection',
+        'Stormwater infiltration capacity',
+        'Bushfire management compliance',
+        'Disability access pathways',
+        'Privacy screening adequacy'
+      ]
+    },
+    'Traffic Report': {
+      requiredElements: [
+        'Traffic volume analysis',
+        'Peak hour assessments',
+        'Parking demand calculations',
+        'Access point safety review',
+        'Pedestrian movement analysis',
+        'Public transport accessibility',
+        'Loading and service access',
+        'Emergency vehicle access',
+        'Traffic impact on nearby roads',
+        'Mitigation measures proposed'
+      ],
+      complianceChecks: [
+        'Parking ratio compliance',
+        'Driveway width ≥ 3.0m (single), ≥ 5.5m (double)',
+        'Sight distance requirements',
+        'Traffic generation thresholds',
+        'Road safety audit compliance',
+        'Accessibility parking provisions',
+        'Bicycle parking requirements',
+        'Waste collection access'
+      ]
+    }
+  };
+
+  // Simulate document analysis for different plan types
+  const analyzeDocument = (documentType, application) => {
+    const requirements = documentAnalysisRequirements[documentType];
+    if (!requirements) return null;
+
+    const mockAnalysis = {
+      documentType,
+      foundElements: [],
+      missingElements: [],
+      complianceIssues: [],
+      complianceScore: 0,
+      recommendations: []
+    };
+
+    // Simulate detection of required elements (random for demo)
+    requirements.requiredElements.forEach(element => {
+      const isFound = Math.random() > 0.3; // 70% chance of finding each element
+      if (isFound) {
+        mockAnalysis.foundElements.push(element);
+      } else {
+        mockAnalysis.missingElements.push(element);
+      }
+    });
+
+    // Simulate compliance checking
+    requirements.complianceChecks.forEach(check => {
+      const isCompliant = Math.random() > 0.25; // 75% chance of compliance
+      if (!isCompliant) {
+        mockAnalysis.complianceIssues.push(check);
+      }
+    });
+
+    // Calculate compliance score
+    const elementScore = (mockAnalysis.foundElements.length / requirements.requiredElements.length) * 50;
+    const complianceScore = ((requirements.complianceChecks.length - mockAnalysis.complianceIssues.length) / requirements.complianceChecks.length) * 50;
+    mockAnalysis.complianceScore = Math.round(elementScore + complianceScore);
+
+    // Generate recommendations
+    if (mockAnalysis.missingElements.length > 0) {
+      mockAnalysis.recommendations.push(`Add missing elements: ${mockAnalysis.missingElements.slice(0, 3).join(', ')}${mockAnalysis.missingElements.length > 3 ? '...' : ''}`);
+    }
+    if (mockAnalysis.complianceIssues.length > 0) {
+      mockAnalysis.recommendations.push(`Address compliance issues: ${mockAnalysis.complianceIssues.slice(0, 2).join(', ')}${mockAnalysis.complianceIssues.length > 2 ? '...' : ''}`);
+    }
+    if (mockAnalysis.complianceScore >= 90) {
+      mockAnalysis.recommendations.push('Excellent compliance - recommend approval');
+    } else if (mockAnalysis.complianceScore >= 70) {
+      mockAnalysis.recommendations.push('Good compliance - minor revisions may be needed');
+    } else if (mockAnalysis.complianceScore >= 50) {
+      mockAnalysis.recommendations.push('Moderate compliance - significant revisions required');
+    } else {
+      mockAnalysis.recommendations.push('Poor compliance - major redesign recommended');
+    }
+
+    return mockAnalysis;
+  };
+
+  // Enhanced comprehensive document analysis
+  const performDocumentAnalysis = (application) => {
+    const submittedDocs = application.documents || [];
+    const documentAnalyses = {};
+    let overallDocumentScore = 0;
+    let analyzedDocuments = 0;
+
+    // Analyze each document type if present
+    const documentTypes = ['Floor Plans', 'Elevations', 'Landscape Plan', 'Traffic Report'];
+    
+    documentTypes.forEach(docType => {
+      const hasDocument = submittedDocs.some(doc => 
+        doc.toLowerCase().includes(docType.toLowerCase().replace(' ', '')) ||
+        doc.toLowerCase().includes(docType.toLowerCase())
+      );
+
+      if (hasDocument) {
+        const analysis = analyzeDocument(docType, application);
+        if (analysis) {
+          documentAnalyses[docType] = analysis;
+          overallDocumentScore += analysis.complianceScore;
+          analyzedDocuments++;
+        }
+      } else {
+        // Mark as missing if required for this application type
+        if (['Development Approval', 'Building Permit - Certified (BA01)', 'Building Permit - Uncertified (BA02)'].includes(application.type)) {
+          documentAnalyses[docType] = {
+            documentType: docType,
+            foundElements: [],
+            missingElements: ['Document not submitted'],
+            complianceIssues: ['Required document missing'],
+            complianceScore: 0,
+            recommendations: [`Submit ${docType} for complete assessment`]
+          };
+        }
+      }
+    });
+
+    const finalScore = analyzedDocuments > 0 ? Math.round(overallDocumentScore / analyzedDocuments) : 0;
+
+    return {
+      documentAnalyses,
+      overallDocumentScore: finalScore,
+      analyzedDocuments,
+      totalDocumentsRequired: documentTypes.length
+    };
+  };
+
   // Site plan validation requirements by zone
   const sitePlanRequirements = {
     'Residential R20': {
@@ -430,6 +635,9 @@ const BuildingApprovalSystem = () => {
     const documentScore = (submittedDocs.length / requiredDocs.length) * 100;
     const missingDocs = requiredDocs.filter(doc => !submittedDocs.includes(doc));
     
+    // Enhanced document analysis
+    const documentAnalysisResults = performDocumentAnalysis(application);
+    
     // Site plan analysis (if site plan is submitted)
     let sitePlanAnalysis = null;
     const hasSitePlan = submittedDocs.some(doc => 
@@ -480,13 +688,38 @@ const BuildingApprovalSystem = () => {
     } else if (['Development Approval', 'Building Permit - Certified (BA01)', 'Building Permit - Uncertified (BA02)'].includes(application.type)) {
       complianceIssues.push('Site plan required but not submitted or not analyzable');
     }
+
+    // Add document analysis issues
+    Object.values(documentAnalysisResults.documentAnalyses).forEach(analysis => {
+      if (analysis.missingElements.length > 0 && !analysis.missingElements.includes('Document not submitted')) {
+        complianceIssues.push(`${analysis.documentType}: ${analysis.missingElements.length} missing elements`);
+      }
+      if (analysis.complianceIssues.length > 0 && !analysis.complianceIssues.includes('Required document missing')) {
+        complianceIssues.push(`${analysis.documentType}: ${analysis.complianceIssues.length} compliance issues`);
+      }
+    });
     
-    // Overall system score (incorporating site plan)
+    // Overall system score (incorporating all analyses)
     let baseScore = (documentScore + fieldCompleteness - (riskLevel * 5)) / 2;
+    
+    // Weight the scores based on analysis availability
+    const scores = [baseScore];
+    const weights = [1];
+    
     if (sitePlanAnalysis) {
-      baseScore = (baseScore + sitePlanAnalysis.complianceScore) / 2;
+      scores.push(sitePlanAnalysis.complianceScore);
+      weights.push(1.5); // Site plan is important
     }
-    const overallScore = Math.max(0, Math.min(100, Math.round(baseScore)));
+    
+    if (documentAnalysisResults.overallDocumentScore > 0) {
+      scores.push(documentAnalysisResults.overallDocumentScore);
+      weights.push(2); // Document analysis is very important
+    }
+    
+    // Calculate weighted average
+    const weightedSum = scores.reduce((sum, score, index) => sum + (score * weights[index]), 0);
+    const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+    const overallScore = Math.max(0, Math.min(100, Math.round(weightedSum / totalWeight)));
     
     // System recommendations
     const systemRecommendations = [];
@@ -504,8 +737,15 @@ const BuildingApprovalSystem = () => {
     if (sitePlanAnalysis) {
       systemRecommendations.push(`Site plan analysis: ${sitePlanAnalysis.recommendation}`);
     }
+
+    // Add document-specific recommendations
+    Object.values(documentAnalysisResults.documentAnalyses).forEach(analysis => {
+      if (analysis.recommendations.length > 0) {
+        systemRecommendations.push(`${analysis.documentType}: ${analysis.recommendations[0]}`);
+      }
+    });
     
-    // Auto-populate checklist (including site plan items)
+    // Auto-populate checklist (including all document types)
     const autoChecklist = getFormChecklist(application.type).map(item => {
       let checked = false;
       let comments = '';
@@ -535,7 +775,7 @@ const BuildingApprovalSystem = () => {
       return { ...item, checked, comments };
     });
     
-    // Add site plan specific checklist items
+    // Add document-specific checklist items
     if (sitePlanAnalysis) {
       autoChecklist.push({
         item: 'Site plan setbacks compliance',
@@ -550,14 +790,21 @@ const BuildingApprovalSystem = () => {
         checked: !sitePlanAnalysis.violations.some(v => v.includes('coverage')),
         comments: sitePlanAnalysis.violations.find(v => v.includes('coverage')) || ''
       });
-      
-      autoChecklist.push({
-        item: 'Site plan parking provision',
-        required: true,
-        checked: !sitePlanAnalysis.violations.some(v => v.includes('Parking')),
-        comments: sitePlanAnalysis.violations.find(v => v.includes('Parking')) || ''
-      });
     }
+
+    // Add document analysis checklist items
+    Object.values(documentAnalysisResults.documentAnalyses).forEach(analysis => {
+      if (analysis.complianceScore > 0) {
+        autoChecklist.push({
+          item: `${analysis.documentType} compliance`,
+          required: true,
+          checked: analysis.complianceScore >= 70,
+          comments: analysis.complianceScore >= 70 ? 
+            `Score: ${analysis.complianceScore}% - Good compliance` : 
+            `Score: ${analysis.complianceScore}% - Needs improvement`
+        });
+      }
+    });
     
     return {
       documentScore,
@@ -569,8 +816,9 @@ const BuildingApprovalSystem = () => {
       missingDocs,
       autoChecklist,
       sitePlanAnalysis,
+      documentAnalysisResults,
       reviewDate: new Date().toISOString().split('T')[0],
-      processingTime: Math.floor(Math.random() * 3) + 1 // 1-3 seconds simulation
+      processingTime: Math.floor(Math.random() * 3) + 2 // 2-4 seconds simulation
     };
   };
 
@@ -649,10 +897,12 @@ const BuildingApprovalSystem = () => {
           <div className="bg-white rounded-lg max-w-2xl w-full p-8 text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">AI System Analysis in Progress</h2>
-            <p className="text-gray-600 mb-4">Analyzing application compliance, site plan requirements, and generating recommendations...</p>
+            <p className="text-gray-600 mb-4">Analyzing application compliance, architectural documents, site plan requirements, and generating comprehensive recommendations...</p>
             <div className="space-y-2 text-sm text-gray-500">
               <p>✓ Checking document completeness</p>
               <p>✓ Validating form data integrity</p>
+              <p>✓ Analyzing floor plans and elevations</p>
+              <p>✓ Reviewing landscape and traffic plans</p>
               <p>✓ Analyzing site plan compliance</p>
               <p>✓ Assessing planning requirements</p>
               <p>✓ Generating recommendations</p>
@@ -732,7 +982,7 @@ const BuildingApprovalSystem = () => {
           
           <div className="p-6 space-y-6">
             {/* System Score Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <div className={`p-4 rounded-lg ${getScoreColor(systemResults.overallScore)}`}>
                 <div className="text-center">
                   <div className="text-2xl font-bold">{systemResults.overallScore}%</div>
@@ -751,6 +1001,14 @@ const BuildingApprovalSystem = () => {
                   <div className="text-sm font-medium">Form Complete</div>
                 </div>
               </div>
+              {systemResults.documentAnalysisResults && (
+                <div className={`p-4 rounded-lg ${getScoreColor(systemResults.documentAnalysisResults.overallDocumentScore)}`}>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">{systemResults.documentAnalysisResults.overallDocumentScore}%</div>
+                    <div className="text-sm font-medium">Plan Analysis</div>
+                  </div>
+                </div>
+              )}
               {systemResults.sitePlanAnalysis && (
                 <div className={`p-4 rounded-lg ${getScoreColor(systemResults.sitePlanAnalysis.complianceScore)}`}>
                   <div className="text-center">
@@ -800,6 +1058,190 @@ const BuildingApprovalSystem = () => {
                 </ul>
               </div>
             )}
+
+            {/* Enhanced Document Analysis Results */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                📐 Comprehensive Document Analysis
+              </h3>
+              
+              {systemResults.documentAnalysisResults && Object.keys(systemResults.documentAnalysisResults.documentAnalyses).length > 0 ? (
+                <div className="space-y-6">
+                  {/* Document Analysis Summary */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                      <div>
+                        <div className="text-2xl font-bold text-blue-600">
+                          {systemResults.documentAnalysisResults.overallDocumentScore}%
+                        </div>
+                        <div className="text-sm text-blue-800">Overall Document Score</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-green-600">
+                          {systemResults.documentAnalysisResults.analyzedDocuments}
+                        </div>
+                        <div className="text-sm text-green-800">Documents Analyzed</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-purple-600">
+                          {Object.values(systemResults.documentAnalysisResults.documentAnalyses)
+                            .reduce((sum, doc) => sum + doc.foundElements.length, 0)}
+                        </div>
+                        <div className="text-sm text-purple-800">Elements Found</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-orange-600">
+                          {Object.values(systemResults.documentAnalysisResults.documentAnalyses)
+                            .reduce((sum, doc) => sum + doc.complianceIssues.length, 0)}
+                        </div>
+                        <div className="text-sm text-orange-800">Issues Detected</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Individual Document Analysis */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {Object.entries(systemResults.documentAnalysisResults.documentAnalyses).map(([docType, analysis]) => (
+                      <div key={docType} className={`border rounded-lg p-4 ${
+                        analysis.complianceScore >= 85 ? 'border-green-200 bg-green-50' :
+                        analysis.complianceScore >= 70 ? 'border-blue-200 bg-blue-50' :
+                        analysis.complianceScore >= 50 ? 'border-yellow-200 bg-yellow-50' :
+                        'border-red-200 bg-red-50'
+                      }`}>
+                        <div className="flex justify-between items-center mb-3">
+                          <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                            {docType === 'Floor Plans' && '🏠'}
+                            {docType === 'Elevations' && '🏗️'}
+                            {docType === 'Landscape Plan' && '🌳'}
+                            {docType === 'Traffic Report' && '🚗'}
+                            {docType}
+                          </h4>
+                          <div className={`text-lg font-bold ${
+                            analysis.complianceScore >= 85 ? 'text-green-600' :
+                            analysis.complianceScore >= 70 ? 'text-blue-600' :
+                            analysis.complianceScore >= 50 ? 'text-yellow-600' : 'text-red-600'
+                          }`}>
+                            {analysis.complianceScore}%
+                          </div>
+                        </div>
+
+                        {/* Analysis Details */}
+                        <div className="space-y-3">
+                          {/* Found Elements */}
+                          {analysis.foundElements.length > 0 && (
+                            <div>
+                              <div className="text-sm font-medium text-green-700 mb-1">
+                                ✅ Found Elements ({analysis.foundElements.length})
+                              </div>
+                              <div className="text-xs text-green-600 space-y-1">
+                                {analysis.foundElements.slice(0, 3).map((element, index) => (
+                                  <div key={index}>• {element}</div>
+                                ))}
+                                {analysis.foundElements.length > 3 && (
+                                  <div className="text-green-500">
+                                    +{analysis.foundElements.length - 3} more...
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Missing Elements */}
+                          {analysis.missingElements.length > 0 && !analysis.missingElements.includes('Document not submitted') && (
+                            <div>
+                              <div className="text-sm font-medium text-red-700 mb-1">
+                                ❌ Missing Elements ({analysis.missingElements.length})
+                              </div>
+                              <div className="text-xs text-red-600 space-y-1">
+                                {analysis.missingElements.slice(0, 3).map((element, index) => (
+                                  <div key={index}>• {element}</div>
+                                ))}
+                                {analysis.missingElements.length > 3 && (
+                                  <div className="text-red-500">
+                                    +{analysis.missingElements.length - 3} more...
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Compliance Issues */}
+                          {analysis.complianceIssues.length > 0 && !analysis.complianceIssues.includes('Required document missing') && (
+                            <div>
+                              <div className="text-sm font-medium text-orange-700 mb-1">
+                                ⚠️ Compliance Issues ({analysis.complianceIssues.length})
+                              </div>
+                              <div className="text-xs text-orange-600 space-y-1">
+                                {analysis.complianceIssues.slice(0, 2).map((issue, index) => (
+                                  <div key={index}>• {issue}</div>
+                                ))}
+                                {analysis.complianceIssues.length > 2 && (
+                                  <div className="text-orange-500">
+                                    +{analysis.complianceIssues.length - 2} more...
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Document Not Submitted */}
+                          {analysis.missingElements.includes('Document not submitted') && (
+                            <div className="text-center py-3">
+                              <div className="text-gray-500 text-sm">📄 Document not submitted</div>
+                              <div className="text-xs text-gray-400 mt-1">
+                                Submit document for detailed analysis
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Recommendations */}
+                          {analysis.recommendations.length > 0 && (
+                            <div className="border-t pt-2">
+                              <div className="text-xs font-medium text-gray-700 mb-1">
+                                💡 Recommendations:
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                {analysis.recommendations[0]}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Document Analysis Legend */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 mb-2">Analysis Legend</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-green-500 rounded"></div>
+                        <span>90-100%: Excellent</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                        <span>70-89%: Good</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+                        <span>50-69%: Needs Work</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-red-500 rounded"></div>
+                        <span>0-49%: Poor</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <div className="text-gray-500">📄 No documents available for analysis</div>
+                  <div className="text-sm text-gray-400 mt-2">
+                    Submit floor plans, elevations, landscape plans, and traffic reports for comprehensive analysis
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Site Plan Analysis Results */}
             {systemResults.sitePlanAnalysis && (
@@ -1067,10 +1509,30 @@ const BuildingApprovalSystem = () => {
                     </div>
                   </>
                 )}
-                {!systemResults.sitePlanAnalysis && ['Development Approval', 'Building Permit - Certified (BA01)', 'Building Permit - Uncertified (BA02)'].includes(application.type) && (
+                {systemResults.documentAnalysisResults && (
+                  <>
+                    <div>
+                      <span className="font-medium text-gray-700">Documents Analyzed:</span>
+                      <span className="ml-2 text-green-600 font-medium">
+                        {systemResults.documentAnalysisResults.analyzedDocuments} of {systemResults.documentAnalysisResults.totalDocumentsRequired}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Document Compliance:</span>
+                      <span className={`ml-2 font-medium ${
+                        systemResults.documentAnalysisResults.overallDocumentScore >= 85 ? 'text-green-600' :
+                        systemResults.documentAnalysisResults.overallDocumentScore >= 70 ? 'text-blue-600' :
+                        systemResults.documentAnalysisResults.overallDocumentScore >= 50 ? 'text-yellow-600' : 'text-red-600'
+                      }`}>
+                        {systemResults.documentAnalysisResults.overallDocumentScore}%
+                      </span>
+                    </div>
+                  </>
+                )}
+                {!systemResults.documentAnalysisResults && ['Development Approval', 'Building Permit - Certified (BA01)', 'Building Permit - Uncertified (BA02)'].includes(application.type) && (
                   <div className="col-span-2">
-                    <span className="font-medium text-gray-700">Site Plan Status:</span>
-                    <span className="ml-2 text-orange-600 font-medium">⚠️ Not analyzed (plan not found or unreadable)</span>
+                    <span className="font-medium text-gray-700">Document Analysis:</span>
+                    <span className="ml-2 text-orange-600 font-medium">⚠️ No architectural documents found for analysis</span>
                   </div>
                 )}
               </div>
@@ -1148,7 +1610,7 @@ const BuildingApprovalSystem = () => {
         assignedOfficer: 'Sarah Johnson',
         referrals: ['Engineering', 'Environmental Health'],
         publicNotification: true,
-        documents: ['Site Plan', 'Floor Plans', 'Elevations', 'Landscape Plan', 'Traffic Report']
+        documents: ['Site Plan', 'Floor Plans', 'Elevations', 'Landscape Plan', 'Traffic Report', 'Drainage Plan']
       },
       {
         id: 'BP2025002',
@@ -1162,7 +1624,7 @@ const BuildingApprovalSystem = () => {
         assignedOfficer: 'Mike Chen',
         referrals: ['Main Roads WA', 'Dept of Fire & Emergency'],
         publicNotification: false,
-        documents: ['Certified Plans', 'Site Plan', 'Structural Report', 'Fire Safety Plan', 'Certificate of Design Compliance (BA03)']
+        documents: ['Certified Plans', 'Site Plan', 'Floor Plans', 'Elevations', 'Structural Report', 'Fire Safety Plan', 'Certificate of Design Compliance (BA03)', 'Traffic Report']
       },
       {
         id: 'DP2025003',
@@ -1198,7 +1660,7 @@ const BuildingApprovalSystem = () => {
         assignedOfficer: 'David Lee',
         referrals: ['Planning', 'Engineering'],
         publicNotification: true,
-        documents: ['Architectural Plans', 'Site Plan', 'Site Analysis', 'Energy Report']
+        documents: ['Architectural Plans', 'Site Plan', 'Floor Plans', 'Site Analysis', 'Energy Report']
       }
     ];
     setApplications(sampleApplications);
@@ -1556,7 +2018,7 @@ const BuildingApprovalSystem = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-sm border">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Applications by Status</h3>
             <div className="space-y-3">
@@ -1623,6 +2085,38 @@ const BuildingApprovalSystem = () => {
               ))}
               {applications.filter(app => app.systemReview?.sitePlanAnalysis).length === 0 && (
                 <p className="text-sm text-gray-500 text-center py-4">No site plan analyses yet</p>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Document Analysis</h3>
+            <div className="space-y-4">
+              {applications.filter(app => app.systemReview?.documentAnalysisResults).map(app => (
+                <div key={app.id} className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{app.id}</p>
+                    <p className="text-xs text-gray-500">
+                      {app.systemReview.documentAnalysisResults.analyzedDocuments} docs analyzed
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-sm font-bold flex items-center gap-1 ${
+                      app.systemReview.documentAnalysisResults.overallDocumentScore >= 85 ? 'text-green-600' :
+                      app.systemReview.documentAnalysisResults.overallDocumentScore >= 70 ? 'text-blue-600' :
+                      app.systemReview.documentAnalysisResults.overallDocumentScore >= 50 ? 'text-yellow-600' : 'text-red-600'
+                    }`}>
+                      📐 {app.systemReview.documentAnalysisResults.overallDocumentScore}%
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {Object.values(app.systemReview.documentAnalysisResults.documentAnalyses)
+                        .reduce((sum, doc) => sum + doc.complianceIssues.length, 0)} issues
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {applications.filter(app => app.systemReview?.documentAnalysisResults).length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">No document analyses yet</p>
               )}
             </div>
           </div>
