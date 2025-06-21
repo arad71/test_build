@@ -8,218 +8,8 @@ const BuildingApprovalSystem = () => {
   const [showNewApplicationModal, setShowNewApplicationModal] = useState(false);
   const [showFormCheckerModal, setShowFormCheckerModal] = useState(false);
   const [showSystemReviewModal, setShowSystemReviewModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showUserManagement, setShowUserManagement] = useState(false);
-  const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
-  const [showAuditLog, setShowAuditLog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [currentUser, setCurrentUser] = useState(null);
-  const [notifications, setNotifications] = useState([]);
-  const [auditLog, setAuditLog] = useState([]);
-
-  // Production-ready user roles and permissions
-  const userRoles = {
-    'admin': {
-      name: 'System Administrator',
-      permissions: ['all'],
-      color: 'bg-purple-100 text-purple-800'
-    },
-    'senior_officer': {
-      name: 'Senior Planning Officer',
-      permissions: ['approve', 'reject', 'assign', 'review', 'create', 'audit'],
-      color: 'bg-blue-100 text-blue-800'
-    },
-    'planning_officer': {
-      name: 'Planning Officer',
-      permissions: ['review', 'recommend', 'create', 'update'],
-      color: 'bg-green-100 text-green-800'
-    },
-    'clerical': {
-      name: 'Clerical Officer',
-      permissions: ['create', 'update', 'view'],
-      color: 'bg-gray-100 text-gray-800'
-    },
-    'applicant': {
-      name: 'External Applicant',
-      permissions: ['create', 'view_own', 'submit'],
-      color: 'bg-yellow-100 text-yellow-800'
-    }
-  };
-
-  // Mock user database
-  const mockUsers = [
-    {
-      id: 1,
-      username: 'sarah.johnson',
-      fullName: 'Sarah Johnson',
-      email: 'sarah.johnson@kalamunda.wa.gov.au',
-      role: 'senior_officer',
-      department: 'Development Services',
-      lastLogin: '2025-06-21T08:30:00Z',
-      isActive: true
-    },
-    {
-      id: 2,
-      username: 'mike.chen',
-      fullName: 'Mike Chen',
-      email: 'mike.chen@kalamunda.wa.gov.au',
-      role: 'planning_officer',
-      department: 'Planning',
-      lastLogin: '2025-06-21T09:15:00Z',
-      isActive: true
-    },
-    {
-      id: 3,
-      username: 'admin',
-      fullName: 'System Administrator',
-      email: 'admin@kalamunda.wa.gov.au',
-      role: 'admin',
-      department: 'IT',
-      lastLogin: '2025-06-21T07:00:00Z',
-      isActive: true
-    }
-  ];
-
-  // Authentication and security functions
-  const hasPermission = (permission) => {
-    if (!currentUser) return false;
-    const userRole = userRoles[currentUser.role];
-    return userRole.permissions.includes('all') || userRole.permissions.includes(permission);
-  };
-
-  const login = (username, password) => {
-    // Simulate authentication
-    const user = mockUsers.find(u => u.username === username);
-    if (user && password === 'demo123') {
-      setCurrentUser(user);
-      addAuditEntry('user_login', `User ${user.fullName} logged in`);
-      setShowLoginModal(false);
-      return true;
-    }
-    return false;
-  };
-
-  const logout = () => {
-    if (currentUser) {
-      addAuditEntry('user_logout', `User ${currentUser.fullName} logged out`);
-      setCurrentUser(null);
-      setActiveTab('dashboard');
-    }
-  };
-
-  // Audit logging system
-  const addAuditEntry = (action, description, applicationId = null) => {
-    const entry = {
-      id: Date.now(),
-      timestamp: new Date().toISOString(),
-      user: currentUser?.fullName || 'System',
-      action,
-      description,
-      applicationId,
-      ipAddress: '192.168.1.100', // Simulated
-      userAgent: navigator.userAgent.split(' ')[0] // Simplified
-    };
-    setAuditLog(prev => [entry, ...prev.slice(0, 99)]); // Keep last 100 entries
-  };
-
-  // Notification system
-  const addNotification = (type, title, message, applicationId = null) => {
-    const notification = {
-      id: Date.now(),
-      type, // 'info', 'success', 'warning', 'error'
-      title,
-      message,
-      applicationId,
-      timestamp: new Date().toISOString(),
-      read: false
-    };
-    setNotifications(prev => [notification, ...prev]);
-
-    // Auto-remove after 5 seconds for non-error notifications
-    if (type !== 'error') {
-      setTimeout(() => {
-        setNotifications(prev => prev.filter(n => n.id !== notification.id));
-      }, 5000);
-    }
-  };
-
-  // Email notification simulation
-  const sendEmailNotification = (to, subject, body, applicationId = null) => {
-    console.log('📧 Email Notification:', { to, subject, body, applicationId });
-    addNotification('info', 'Email Sent', `Notification sent to ${to}`, applicationId);
-    addAuditEntry('email_sent', `Email notification sent to ${to} regarding ${subject}`, applicationId);
-  };
-
-  // PDF generation simulation
-  const generatePDF = (type, application) => {
-    addNotification('info', 'PDF Generated', `${type} report created for ${application.id}`);
-    addAuditEntry('pdf_generated', `${type} PDF generated for application ${application.id}`, application.id);
-    
-    // Simulate PDF download
-    const blob = new Blob([`${type} Report for ${application.id}\n\nApplication Details:\nType: ${application.type}\nProperty: ${application.property}\nApplicant: ${application.applicant}\nStatus: ${application.status}\n\nGenerated: ${new Date().toLocaleString()}`], 
-      { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${application.id}-${type.toLowerCase()}-report.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // Database integration simulation
-  const saveToDatabase = async (table, data, operation = 'INSERT') => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    console.log('💾 Database Operation:', { table, operation, data });
-    addAuditEntry('database_operation', `${operation} operation on ${table} table`);
-    return { success: true, id: Date.now() };
-  };
-
-  // Integration APIs simulation
-  const integrateWithExternalSystems = async (application, system) => {
-    const systems = {
-      'planning_portal': {
-        name: 'WA Planning Portal',
-        endpoint: 'https://www.planning.wa.gov.au/api',
-        description: 'State planning system integration'
-      },
-      'main_roads': {
-        name: 'Main Roads WA',
-        endpoint: 'https://www.mainroads.wa.gov.au/api',
-        description: 'Traffic and road access approvals'
-      },
-      'water_corp': {
-        name: 'Water Corporation',
-        endpoint: 'https://www.watercorporation.com.au/api',
-        description: 'Water and sewer connections'
-      },
-      'western_power': {
-        name: 'Western Power',
-        endpoint: 'https://www.westernpower.com.au/api',
-        description: 'Electrical infrastructure'
-      }
-    };
-
-    console.log('🔗 External API Integration:', system, systems[system]);
-    addNotification('info', 'External System', `Checking with ${systems[system]?.name || system}`);
-    addAuditEntry('external_api', `Integration request sent to ${system}`, application.id);
-    
-    // Simulate API response
-    setTimeout(() => {
-      addNotification('success', 'External Approval', `${systems[system]?.name || system} approval received`);
-    }, 2000);
-  };
-
-  // Performance monitoring
-  const performanceMetrics = {
-    averageProcessingTime: '4.2 days',
-    approvalRate: '87%',
-    systemUptime: '99.9%',
-    userSatisfaction: '4.6/5',
-    totalApplications: applications.length,
-    pendingApplications: applications.filter(app => !['Approved', 'Refused'].includes(app.status)).length
-  };
 
   const applicationStatuses = [
     'Draft', 'Submitted', 'DCU Review', 'Internal Referral', 'External Referral',
@@ -578,47 +368,7 @@ const BuildingApprovalSystem = () => {
     const [isAnalyzing, setIsAnalyzing] = useState(true);
     const [systemResults, setSystemResults] = useState(null);
 
-    // Initialize with demo user for testing
-  useEffect(() => {
-    // Auto-login for demo purposes
-    setCurrentUser(mockUsers[0]);
-    
-    // Initialize sample notifications
-    setNotifications([
-      {
-        id: 1,
-        type: 'warning',
-        title: 'Application Overdue',
-        message: 'Application DA2025001 is 2 days overdue for review',
-        applicationId: 'DA2025001',
-        timestamp: new Date().toISOString(),
-        read: false
-      },
-      {
-        id: 2,
-        type: 'success',
-        title: 'System Backup Complete',
-        message: 'Daily system backup completed successfully',
-        timestamp: new Date().toISOString(),
-        read: false
-      }
-    ]);
-
-    // Initialize audit log
-    setAuditLog([
-      {
-        id: 1,
-        timestamp: new Date().toISOString(),
-        user: 'Sarah Johnson',
-        action: 'application_approved',
-        description: 'Approved application DP2025003',
-        applicationId: 'DP2025003',
-        ipAddress: '192.168.1.100'
-      }
-    ]);
-  }, []);
-
-  useEffect(() => {
+    useEffect(() => {
       // Simulate system analysis time (2-4 seconds)
       const processingTime = Math.floor(Math.random() * 3) + 2;
       const timer = setTimeout(() => {
@@ -657,62 +407,6 @@ const BuildingApprovalSystem = () => {
               <p>✓ Assessing planning requirements</p>
               <p>✓ Generating recommendations</p>
             </div>
-
-      {/* Production Footer */}
-      <footer className="bg-gray-800 text-white py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">City of Kalamunda</h3>
-              <p className="text-gray-300 text-sm">
-                Building Approval System v2.0
-                <br />
-                Production Environment
-                <br />
-                Building Act 2011 Compliant
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-semibold mb-4">System Status</h3>
-              <div className="text-sm text-gray-300 space-y-1">
-                <p>🟢 All Systems Operational</p>
-                <p>📊 Uptime: {performanceMetrics.systemUptime}</p>
-                <p>🔒 Security: Enterprise Grade</p>
-                <p>🌐 API Status: Healthy</p>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Contact Support</h3>
-              <div className="text-sm text-gray-300 space-y-1">
-                <p>📞 (08) 9257 9999</p>
-                <p>📧 itsupport@kalamunda.wa.gov.au</p>
-                <p>🕒 Mon-Fri 8:00 AM - 5:00 PM</p>
-                <p>🏢 2 Railway Road, Kalamunda</p>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-              <div className="text-sm text-gray-300 space-y-1">
-                <p>📋 User Manual</p>
-                <p>🔧 System Requirements</p>
-                <p>🔐 Privacy Policy</p>
-                <p>📊 Service Status</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-400">
-            <p>© 2025 City of Kalamunda. All rights reserved. | System administered by IT Department</p>
-            <p className="mt-2">
-              Last System Update: June 21, 2025 | Database Version: 2.1.4 | 
-              {currentUser && ` Logged in as: ${currentUser.fullName} (${userRoles[currentUser.role].name})`}
-            </p>
-          </div>
-        </div>
-      </footer>
           </div>
         </div>
       );
@@ -1236,269 +930,6 @@ const BuildingApprovalSystem = () => {
     const matchesFilter = filterStatus === 'all' || app.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
-
-  const LoginModal = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-
-    const handleLogin = () => {
-      if (login(username, password)) {
-        setUsername('');
-        setPassword('');
-        setError('');
-      } else {
-        setError('Invalid credentials. Use demo credentials: any username with password "demo123"');
-      }
-    };
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg max-w-md w-full p-6">
-          <div className="text-center mb-6">
-            <Building className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900">City of Kalamunda</h2>
-            <p className="text-gray-600">Building Approval System Login</p>
-          </div>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter username"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-              <input
-                type="password"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
-              />
-            </div>
-            
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded p-3 text-red-700 text-sm">
-                {error}
-              </div>
-            )}
-            
-            <div className="bg-blue-50 border border-blue-200 rounded p-3 text-blue-700 text-sm">
-              <p className="font-medium">Demo Credentials:</p>
-              <p>Username: sarah.johnson (or any user)</p>
-              <p>Password: demo123</p>
-            </div>
-            
-            <button
-              onClick={handleLogin}
-              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-            >
-              Login
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const NotificationsPanel = () => (
-    <div className="fixed top-16 right-4 w-80 bg-white rounded-lg shadow-lg border z-40 max-h-96 overflow-y-auto">
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex justify-between items-center">
-          <h3 className="font-semibold text-gray-900">Notifications</h3>
-          <button
-            onClick={() => setShowNotificationsPanel(false)}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            ✕
-          </button>
-        </div>
-      </div>
-      
-      <div className="p-4 space-y-3">
-        {notifications.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">No new notifications</p>
-        ) : (
-          notifications.slice(0, 10).map(notification => (
-            <div key={notification.id} className={`p-3 rounded-lg border-l-4 ${
-              notification.type === 'error' ? 'border-red-500 bg-red-50' :
-              notification.type === 'warning' ? 'border-yellow-500 bg-yellow-50' :
-              notification.type === 'success' ? 'border-green-500 bg-green-50' :
-              'border-blue-500 bg-blue-50'
-            }`}>
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900 text-sm">{notification.title}</p>
-                  <p className="text-gray-600 text-xs mt-1">{notification.message}</p>
-                  <p className="text-gray-400 text-xs mt-1">
-                    {new Date(notification.timestamp).toLocaleTimeString()}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-
-  const UserManagement = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
-          <Plus className="h-5 w-5" />
-          Add User
-        </button>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Login</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {mockUsers.map(user => (
-              <tr key={user.id}>
-                <td className="px-6 py-4">
-                  <div>
-                    <p className="font-medium text-gray-900">{user.fullName}</p>
-                    <p className="text-sm text-gray-500">{user.email}</p>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${userRoles[user.role].color}`}>
-                    {userRoles[user.role].name}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900">{user.department}</td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {new Date(user.lastLogin).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {user.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex space-x-2">
-                    <button className="text-blue-600 hover:text-blue-900">
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button className="text-red-600 hover:text-red-900">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-
-  const AuditLog = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Audit Log</h2>
-      
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Application</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {auditLog.map(entry => (
-                <tr key={entry.id}>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {new Date(entry.timestamp).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{entry.user}</td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                      {entry.action}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{entry.description}</td>
-                  <td className="px-6 py-4 text-sm text-blue-600">{entry.applicationId || '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-
-  const ProductionDashboard = () => (
-    <div className="space-y-6">
-      {/* Performance Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{performanceMetrics.averageProcessingTime}</div>
-            <div className="text-sm text-gray-600">Avg Processing</div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{performanceMetrics.approvalRate}</div>
-            <div className="text-sm text-gray-600">Approval Rate</div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">{performanceMetrics.systemUptime}</div>
-            <div className="text-sm text-gray-600">System Uptime</div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-yellow-600">{performanceMetrics.userSatisfaction}</div>
-            <div className="text-sm text-gray-600">Satisfaction</div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">{performanceMetrics.totalApplications}</div>
-            <div className="text-sm text-gray-600">Total Apps</div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">{performanceMetrics.pendingApplications}</div>
-            <div className="text-sm text-gray-600">Pending</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Existing dashboard content */}
-      <DashboardView />
-    </div>
-  );
 
   const DashboardView = () => {
     const statusCounts = applicationStatuses.reduce((acc, status) => {
@@ -2036,10 +1467,19 @@ const BuildingApprovalSystem = () => {
         recommendation,
         decision,
         reviewDate: new Date().toISOString().split('T')[0],
-        reviewer: currentUser?.fullName || 'Current Officer'
+        reviewer: 'Current Officer'
       };
       
-      enhancedSubmitReview(decision, application, reviewData);
+      const newStatus = decision === 'approve' ? 'Approved' : 
+                       decision === 'reject' ? 'Refused' : 'Requires Changes';
+      
+      setApplications(prev => prev.map(app => 
+        app.id === application.id 
+          ? { ...app, status: newStatus, review: reviewData }
+          : app
+      ));
+      
+      alert(`Application ${decision === 'approve' ? 'approved' : decision === 'reject' ? 'refused' : 'returned for changes'}`);
       onClose();
     };
 
@@ -2205,12 +1645,6 @@ const BuildingApprovalSystem = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => generatePDF('Compliance Report', application)}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                >
-                  Generate Report
-                </button>
-                <button
                   onClick={() => submitReview('changes')}
                   disabled={!recommendation}
                   className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -2321,35 +1755,10 @@ const BuildingApprovalSystem = () => {
               <CheckCircle className="h-4 w-4" />
               Check Forms
             </button>
-            <button 
-              onClick={() => generatePDF('Application Summary', application)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Export PDF
+            <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+              Update Status
             </button>
-            <button 
-              onClick={() => {
-                const referrals = ['main_roads', 'water_corp', 'western_power'];
-                referrals.forEach(system => integrateWithExternalSystems(application, system));
-                addNotification('info', 'External Referrals', 'Checking with external agencies...');
-              }}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-            >
-              Send Referrals
-            </button>
-            {hasPermission('update') && (
-              <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                Update Status
-              </button>
-            )}
-            <button 
-              onClick={() => {
-                addAuditEntry('note_added', `Note added to application ${application.id}`, application.id);
-                addNotification('success', 'Note Added', 'Note successfully added to application');
-              }}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-            >
+            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
               Add Note
             </button>
           </div>
@@ -2462,192 +1871,8 @@ const BuildingApprovalSystem = () => {
     );
   };
 
-  const Analytics = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">System Analytics</h2>
-      
-      {/* Key Performance Indicators */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <FileText className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Monthly Applications</p>
-              <p className="text-2xl font-bold text-gray-900">127</p>
-              <p className="text-xs text-green-600">+12% from last month</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="bg-green-100 p-3 rounded-lg">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Approval Rate</p>
-              <p className="text-2xl font-bold text-gray-900">89.3%</p>
-              <p className="text-xs text-green-600">+2.1% from last month</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="bg-yellow-100 p-3 rounded-lg">
-              <Clock className="h-6 w-6 text-yellow-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Avg. Processing</p>
-              <p className="text-2xl font-bold text-gray-900">3.8 days</p>
-              <p className="text-xs text-green-600">-0.4 days improvement</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <div className="bg-purple-100 p-3 rounded-lg">
-              <Users className="h-6 w-6 text-purple-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">User Satisfaction</p>
-              <p className="text-2xl font-bold text-gray-900">4.7/5</p>
-              <p className="text-xs text-green-600">+0.2 improvement</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* System Health */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">System Health</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Server Uptime</span>
-              <span className="text-sm font-medium text-green-600">99.94%</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Database Performance</span>
-              <span className="text-sm font-medium text-green-600">Excellent</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">API Response Time</span>
-              <span className="text-sm font-medium text-yellow-600">124ms</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Active Users</span>
-              <span className="text-sm font-medium text-blue-600">23</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Integration Status</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">WA Planning Portal</span>
-              <span className="text-sm font-medium text-green-600">Connected</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Main Roads WA</span>
-              <span className="text-sm font-medium text-green-600">Connected</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Water Corporation</span>
-              <span className="text-sm font-medium text-yellow-600">Limited</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Western Power</span>
-              <span className="text-sm font-medium text-green-600">Connected</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Recent Activity Summary */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity Summary</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-blue-600">47</div>
-            <div className="text-sm text-gray-600">Applications This Week</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-600">34</div>
-            <div className="text-sm text-gray-600">Approvals This Week</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-orange-600">8</div>
-            <div className="text-sm text-gray-600">Pending Reviews</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Enhanced form submission with audit logging and notifications
-  const enhancedSubmitReview = (decision, application, reviewData) => {
-    const newStatus = decision === 'approve' ? 'Approved' : 
-                     decision === 'reject' ? 'Refused' : 'Requires Changes';
-    
-    // Update application
-    setApplications(prev => prev.map(app => 
-      app.id === application.id 
-        ? { ...app, status: newStatus, review: reviewData }
-        : app
-    ));
-    
-    // Add audit entry
-    addAuditEntry(`application_${decision}`, 
-      `${decision.charAt(0).toUpperCase() + decision.slice(1)}ed application ${application.id}`, 
-      application.id);
-    
-    // Send notifications
-    addNotification('success', 'Application Updated', 
-      `Application ${application.id} has been ${decision}ed`, application.id);
-    
-    // Send email notification to applicant
-    sendEmailNotification(
-      `${application.applicant}@example.com`,
-      `Application ${application.id} ${decision.charAt(0).toUpperCase() + decision.slice(1)}ed`,
-      `Your application ${application.id} has been ${decision}ed. Please check the system for details.`,
-      application.id
-    );
-    
-    // Generate PDF report
-    generatePDF('Decision Report', application);
-    
-    // Integrate with external systems if approved
-    if (decision === 'approve' && application.referrals) {
-      application.referrals.forEach(referral => {
-        if (referral.includes('Main Roads')) {
-          integrateWithExternalSystems(application, 'main_roads');
-        }
-        if (referral.includes('Water')) {
-          integrateWithExternalSystems(application, 'water_corp');
-        }
-      });
-    }
-  };
-
-  // If user is not logged in, show login modal
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoginModal />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {showLoginModal && <LoginModal />}
-      {showNotificationsPanel && <NotificationsPanel />}
-
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
@@ -2655,51 +1880,12 @@ const BuildingApprovalSystem = () => {
               <Building className="h-8 w-8 text-blue-600 mr-3" />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">City of Kalamunda</h1>
-                <p className="text-sm text-gray-600">Building Approval System v2.0 (Production)</p>
+                <p className="text-sm text-gray-600">Building Approval System</p>
               </div>
             </div>
-            
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">Building Act 2011 Compliant</span>
-              
-              {/* Notifications */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowNotificationsPanel(!showNotificationsPanel)}
-                  className="relative p-2 text-gray-400 hover:text-gray-600"
-                >
-                  <AlertTriangle className="h-5 w-5" />
-                  {notifications.filter(n => !n.read).length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {notifications.filter(n => !n.read).length}
-                    </span>
-                  )}
-                </button>
-              </div>
-              
-              {/* User Profile */}
-              {currentUser ? (
-                <div className="flex items-center space-x-3">
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">{currentUser.fullName}</p>
-                    <p className="text-xs text-gray-500">{userRoles[currentUser.role].name}</p>
-                  </div>
-                  <Users className="h-8 w-8 text-gray-400" />
-                  <button
-                    onClick={logout}
-                    className="text-sm text-red-600 hover:text-red-800"
-                  >
-                    Logout
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowLoginModal(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                >
-                  Login
-                </button>
-              )}
+              <Users className="h-5 w-5 text-gray-400" />
             </div>
           </div>
         </div>
@@ -2707,45 +1893,41 @@ const BuildingApprovalSystem = () => {
 
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8 overflow-x-auto">
+          <nav className="flex space-x-8">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'dashboard'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              📊 Dashboard
+              Dashboard
             </button>
-            {hasPermission('view') && (
-              <button
-                onClick={() => setActiveTab('applications')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                  activeTab === 'applications'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                📋 Applications
-              </button>
-            )}
-            {hasPermission('review') && (
-              <button
-                onClick={() => setActiveTab('review')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                  activeTab === 'review'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <CheckCircle className="h-4 w-4 inline mr-1" />
-                Review Queue
-              </button>
-            )}
+            <button
+              onClick={() => setActiveTab('applications')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'applications'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Applications
+            </button>
+            <button
+              onClick={() => setActiveTab('review')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'review'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <CheckCircle className="h-4 w-4 inline mr-1" />
+              Review Queue
+            </button>
             <button
               onClick={() => setActiveTab('forms')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'forms'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -2756,7 +1938,7 @@ const BuildingApprovalSystem = () => {
             </button>
             <button
               onClick={() => setActiveTab('calendar')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'calendar'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -2765,92 +1947,21 @@ const BuildingApprovalSystem = () => {
               <Calendar className="h-4 w-4 inline mr-1" />
               Council Calendar
             </button>
-            {hasPermission('all') && (
-              <>
-                <button
-                  onClick={() => setActiveTab('users')}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                    activeTab === 'users'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  👥 User Management
-                </button>
-                <button
-                  onClick={() => setActiveTab('audit')}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                    activeTab === 'audit'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  🔍 Audit Log
-                </button>
-                <button
-                  onClick={() => setActiveTab('analytics')}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                    activeTab === 'analytics'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  📈 Analytics
-                </button>
-              </>
-            )}
           </nav>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'dashboard' && <ProductionDashboard />}
-        {activeTab === 'applications' && hasPermission('view') && <ApplicationsList />}
-        {activeTab === 'review' && hasPermission('review') && <ReviewQueue />}
+        {activeTab === 'dashboard' && <DashboardView />}
+        {activeTab === 'applications' && <ApplicationsList />}
+        {activeTab === 'review' && <ReviewQueue />}
         {activeTab === 'forms' && <FormsReference />}
-        {activeTab === 'users' && hasPermission('all') && <UserManagement />}
-        {activeTab === 'audit' && hasPermission('all') && <AuditLog />}
-        {activeTab === 'analytics' && hasPermission('all') && <Analytics />}
         {activeTab === 'calendar' && (
           <div className="bg-white p-8 rounded-lg shadow-sm border text-center">
             <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Council Meeting Calendar</h3>
             <p className="text-gray-600 mb-4">Next Council meeting: Fourth Monday of each month</p>
             <p className="text-sm text-gray-500">Applications requiring Council determination will be scheduled here</p>
-            
-            {hasPermission('all') && (
-              <div className="mt-6 space-y-2">
-                <button
-                  onClick={() => addNotification('info', 'Calendar Sync', 'Syncing with Outlook calendar...')}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 mr-2"
-                >
-                  Sync with Outlook
-                </button>
-                <button
-                  onClick={() => generatePDF('Council Schedule', { id: 'COUNCIL-2025', type: 'Council Schedule' })}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-                >
-                  Export Schedule
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* Unauthorized access message */}
-        {!hasPermission('view') && ['applications', 'review'].includes(activeTab) && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-red-900 mb-2">Access Denied</h3>
-            <p className="text-red-700">You don't have permission to access this section.</p>
-          </div>
-        )}
-        
-        {!hasPermission('all') && ['users', 'audit', 'analytics'].includes(activeTab) && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-red-900 mb-2">Administrator Access Required</h3>
-            <p className="text-red-700">This section is only accessible to system administrators.</p>
           </div>
         )}
       </div>
