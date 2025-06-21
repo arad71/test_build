@@ -9,7 +9,9 @@ const BuildingApprovalSystem = () => {
   const [showFormCheckerModal, setShowFormCheckerModal] = useState(false);
   const [showSystemReviewModal, setShowSystemReviewModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showUserManagement, setShowUserManagement] = useState(false);
   const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
+  const [showAuditLog, setShowAuditLog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentUser, setCurrentUser] = useState(null);
@@ -78,115 +80,6 @@ const BuildingApprovalSystem = () => {
       isActive: true
     }
   ];
-
-  // Initialize with demo user for testing
-  useEffect(() => {
-    // Auto-login for demo purposes
-    setCurrentUser(mockUsers[0]);
-    
-    // Initialize sample applications
-    const sampleApplications = [
-      {
-        id: 'DA2025001',
-        type: 'Development Approval',
-        property: '123 Lesmurdie Road, Lesmurdie',
-        applicant: 'John Smith',
-        description: 'Two-storey residential extension',
-        status: 'Officer Assessment',
-        submissionDate: '2025-05-15',
-        targetDate: '2025-07-15',
-        assignedOfficer: 'Sarah Johnson',
-        referrals: ['Engineering', 'Environmental Health'],
-        publicNotification: true,
-        documents: ['Site Plan', 'Floor Plans', 'Elevations', 'Landscape Plan', 'Traffic Report', 'Drainage Plan']
-      },
-      {
-        id: 'BP2025002',
-        type: 'Building Permit - Certified (BA01)',
-        property: '45 Kalamunda Road, Kalamunda',
-        applicant: 'ABC Construction',
-        description: 'New commercial building',
-        status: 'External Referral',
-        submissionDate: '2025-06-01',
-        targetDate: '2025-08-30',
-        assignedOfficer: 'Mike Chen',
-        referrals: ['Main Roads WA', 'Dept of Fire & Emergency'],
-        publicNotification: false,
-        documents: ['Certified Plans', 'Site Plan', 'Floor Plans', 'Elevations', 'Structural Report', 'Fire Safety Plan', 'Certificate of Design Compliance (BA03)', 'Traffic Report']
-      },
-      {
-        id: 'DP2025003',
-        type: 'Demolition Permit (BA05)',
-        property: '78 Welshpool Road, Welshpool',
-        applicant: 'Demo Pro Pty Ltd',
-        description: 'Demolition of existing warehouse',
-        status: 'Approved',
-        submissionDate: '2025-04-20',
-        targetDate: '2025-06-20',
-        assignedOfficer: 'Lisa Wong',
-        referrals: ['Environmental Health'],
-        publicNotification: false,
-        documents: ['Demolition Plan', 'Asbestos Report', 'Traffic Management'],
-        systemReview: {
-          overallScore: 89,
-          documentScore: 100,
-          fieldCompleteness: 100,
-          riskLevel: 2,
-          systemRecommendations: ['Application appears ready for approval - recommend expedited review'],
-          reviewDate: '2025-04-21'
-        }
-      },
-      {
-        id: 'BA2025004',
-        type: 'Building Permit - Uncertified (BA02)',
-        property: '22 Forest Road, Forrestfield',
-        applicant: 'Green Homes Pty Ltd',
-        description: 'Single storey residential dwelling',
-        status: 'DCU Review',
-        submissionDate: '2025-06-10',
-        targetDate: '2025-08-10',
-        assignedOfficer: 'David Lee',
-        referrals: ['Planning', 'Engineering'],
-        publicNotification: true,
-        documents: ['Architectural Plans', 'Site Plan', 'Floor Plans', 'Site Analysis', 'Energy Report']
-      }
-    ];
-    setApplications(sampleApplications);
-    
-    // Initialize sample notifications
-    setNotifications([
-      {
-        id: 1,
-        type: 'warning',
-        title: 'Application Overdue',
-        message: 'Application DA2025001 is 2 days overdue for review',
-        applicationId: 'DA2025001',
-        timestamp: new Date().toISOString(),
-        read: false
-      },
-      {
-        id: 2,
-        type: 'success',
-        title: 'System Backup Complete',
-        message: 'Daily system backup completed successfully',
-        timestamp: new Date().toISOString(),
-        read: false
-      }
-    ]);
-
-    // Initialize audit log
-    setAuditLog([
-      {
-        id: 1,
-        timestamp: new Date().toISOString(),
-        user: 'Sarah Johnson',
-        action: 'application_approved',
-        description: 'Approved application DP2025003',
-        applicationId: 'DP2025003',
-        ipAddress: '192.168.1.100'
-      }
-    ]);
-  }, []);
 
   // Authentication and security functions
   const hasPermission = (permission) => {
@@ -274,6 +167,50 @@ const BuildingApprovalSystem = () => {
     URL.revokeObjectURL(url);
   };
 
+  // Database integration simulation
+  const saveToDatabase = async (table, data, operation = 'INSERT') => {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    console.log('💾 Database Operation:', { table, operation, data });
+    addAuditEntry('database_operation', `${operation} operation on ${table} table`);
+    return { success: true, id: Date.now() };
+  };
+
+  // Integration APIs simulation
+  const integrateWithExternalSystems = async (application, system) => {
+    const systems = {
+      'planning_portal': {
+        name: 'WA Planning Portal',
+        endpoint: 'https://www.planning.wa.gov.au/api',
+        description: 'State planning system integration'
+      },
+      'main_roads': {
+        name: 'Main Roads WA',
+        endpoint: 'https://www.mainroads.wa.gov.au/api',
+        description: 'Traffic and road access approvals'
+      },
+      'water_corp': {
+        name: 'Water Corporation',
+        endpoint: 'https://www.watercorporation.com.au/api',
+        description: 'Water and sewer connections'
+      },
+      'western_power': {
+        name: 'Western Power',
+        endpoint: 'https://www.westernpower.com.au/api',
+        description: 'Electrical infrastructure'
+      }
+    };
+
+    console.log('🔗 External API Integration:', system, systems[system]);
+    addNotification('info', 'External System', `Checking with ${systems[system]?.name || system}`);
+    addAuditEntry('external_api', `Integration request sent to ${system}`, application.id);
+    
+    // Simulate API response
+    setTimeout(() => {
+      addNotification('success', 'External Approval', `${systems[system]?.name || system} approval received`);
+    }, 2000);
+  };
+
   // Performance monitoring
   const performanceMetrics = {
     averageProcessingTime: '4.2 days',
@@ -329,6 +266,943 @@ const BuildingApprovalSystem = () => {
       'Structural Assessment', 'Compliance Statement'
     ]
   };
+
+  // Site plan validation requirements by zone
+  const sitePlanRequirements = {
+    'Residential R20': {
+      frontSetback: 6.0,
+      sideSetback: 1.5,
+      rearSetback: 6.0,
+      maxBuildingHeight: 9.0,
+      maxPlotRatio: 0.5,
+      minLandscaping: 50,
+      minParkingSpaces: 2,
+      maxBuildingCoverage: 50
+    },
+    'Residential R40': {
+      frontSetback: 4.0,
+      sideSetback: 1.2,
+      rearSetback: 4.0,
+      maxBuildingHeight: 9.0,
+      maxPlotRatio: 0.6,
+      minLandscaping: 40,
+      minParkingSpaces: 1.5,
+      maxBuildingCoverage: 60
+    },
+    'Commercial': {
+      frontSetback: 3.0,
+      sideSetback: 0,
+      rearSetback: 3.0,
+      maxBuildingHeight: 12.0,
+      maxPlotRatio: 1.0,
+      minLandscaping: 20,
+      minParkingSpaces: 3.5,
+      maxBuildingCoverage: 80
+    },
+    'Industrial': {
+      frontSetback: 10.0,
+      sideSetback: 3.0,
+      rearSetback: 6.0,
+      maxBuildingHeight: 15.0,
+      maxPlotRatio: 0.8,
+      minLandscaping: 15,
+      minParkingSpaces: 2.0,
+      maxBuildingCoverage: 70
+    }
+  };
+
+  // Simulate site plan analysis
+  const analyzeSitePlan = (application) => {
+    // Simulate extraction of site plan data (in real system would use AI/OCR)
+    const mockSitePlanData = {
+      lotArea: Math.floor(Math.random() * 500) + 400, // 400-900 sqm
+      buildingArea: Math.floor(Math.random() * 200) + 150, // 150-350 sqm
+      frontSetback: Math.random() * 8 + 2, // 2-10m
+      sideSetback: Math.random() * 3 + 0.5, // 0.5-3.5m
+      rearSetback: Math.random() * 8 + 2, // 2-10m
+      buildingHeight: Math.random() * 12 + 6, // 6-18m
+      parkingSpaces: Math.floor(Math.random() * 4) + 1, // 1-4 spaces
+      landscapedArea: Math.floor(Math.random() * 40) + 20, // 20-60%
+      zoning: ['Residential R20', 'Residential R40', 'Commercial', 'Industrial'][Math.floor(Math.random() * 4)],
+      hasStormwater: Math.random() > 0.3,
+      hasServices: Math.random() > 0.2,
+      neighborConsultation: Math.random() > 0.4
+    };
+
+    const requirements = sitePlanRequirements[mockSitePlanData.zoning];
+    const violations = [];
+    const warnings = [];
+    const compliant = [];
+
+    // Check setbacks
+    if (mockSitePlanData.frontSetback < requirements.frontSetback) {
+      violations.push(`Front setback ${mockSitePlanData.frontSetback.toFixed(1)}m < required ${requirements.frontSetback}m`);
+    } else {
+      compliant.push(`Front setback compliant: ${mockSitePlanData.frontSetback.toFixed(1)}m`);
+    }
+
+    if (mockSitePlanData.sideSetback < requirements.sideSetback) {
+      violations.push(`Side setback ${mockSitePlanData.sideSetback.toFixed(1)}m < required ${requirements.sideSetback}m`);
+    } else {
+      compliant.push(`Side setback compliant: ${mockSitePlanData.sideSetback.toFixed(1)}m`);
+    }
+
+    if (mockSitePlanData.rearSetback < requirements.rearSetback) {
+      violations.push(`Rear setback ${mockSitePlanData.rearSetback.toFixed(1)}m < required ${requirements.rearSetback}m`);
+    } else {
+      compliant.push(`Rear setback compliant: ${mockSitePlanData.rearSetback.toFixed(1)}m`);
+    }
+
+    // Check building coverage
+    const buildingCoverage = (mockSitePlanData.buildingArea / mockSitePlanData.lotArea) * 100;
+    if (buildingCoverage > requirements.maxBuildingCoverage) {
+      violations.push(`Building coverage ${buildingCoverage.toFixed(1)}% > maximum ${requirements.maxBuildingCoverage}%`);
+    } else {
+      compliant.push(`Building coverage compliant: ${buildingCoverage.toFixed(1)}%`);
+    }
+
+    // Check plot ratio
+    const plotRatio = mockSitePlanData.buildingArea / mockSitePlanData.lotArea;
+    if (plotRatio > requirements.maxPlotRatio) {
+      violations.push(`Plot ratio ${plotRatio.toFixed(2)} > maximum ${requirements.maxPlotRatio}`);
+    } else {
+      compliant.push(`Plot ratio compliant: ${plotRatio.toFixed(2)}`);
+    }
+
+    // Check building height
+    if (mockSitePlanData.buildingHeight > requirements.maxBuildingHeight) {
+      violations.push(`Building height ${mockSitePlanData.buildingHeight.toFixed(1)}m > maximum ${requirements.maxBuildingHeight}m`);
+    } else {
+      compliant.push(`Building height compliant: ${mockSitePlanData.buildingHeight.toFixed(1)}m`);
+    }
+
+    // Check parking
+    if (mockSitePlanData.parkingSpaces < requirements.minParkingSpaces) {
+      violations.push(`Parking ${mockSitePlanData.parkingSpaces} spaces < required ${requirements.minParkingSpaces}`);
+    } else {
+      compliant.push(`Parking provision compliant: ${mockSitePlanData.parkingSpaces} spaces`);
+    }
+
+    // Check landscaping
+    if (mockSitePlanData.landscapedArea < requirements.minLandscaping) {
+      violations.push(`Landscaping ${mockSitePlanData.landscapedArea}% < required ${requirements.minLandscaping}%`);
+    } else {
+      compliant.push(`Landscaping compliant: ${mockSitePlanData.landscapedArea}%`);
+    }
+
+    // Check services and infrastructure
+    if (!mockSitePlanData.hasStormwater) {
+      warnings.push('Stormwater management details not clear on site plan');
+    }
+
+    if (!mockSitePlanData.hasServices) {
+      warnings.push('Utility services connection not shown');
+    }
+
+    if (!mockSitePlanData.neighborConsultation && violations.length > 0) {
+      warnings.push('Neighbor consultation may be required due to non-compliances');
+    }
+
+    // Calculate compliance score
+    const totalChecks = 8;
+    const compliantChecks = compliant.length;
+    const complianceScore = Math.round((compliantChecks / totalChecks) * 100);
+
+    return {
+      sitePlanData: mockSitePlanData,
+      requirements,
+      violations,
+      warnings,
+      compliant,
+      complianceScore,
+      recommendation: complianceScore >= 90 ? 'Approve site plan' :
+                     complianceScore >= 70 ? 'Approve with conditions' :
+                     complianceScore >= 50 ? 'Request modifications' : 'Reject - major non-compliance'
+    };
+  };
+
+  // System review automation functions
+  const performSystemReview = (application) => {
+    const requiredDocs = requiredDocuments[application.type] || [];
+    const submittedDocs = application.documents || [];
+    
+    // Document completeness analysis
+    const documentScore = (submittedDocs.length / requiredDocs.length) * 100;
+    const missingDocs = requiredDocs.filter(doc => !submittedDocs.includes(doc));
+    
+    // Site plan analysis (if site plan is submitted)
+    let sitePlanAnalysis = null;
+    const hasSitePlan = submittedDocs.some(doc => 
+      doc.toLowerCase().includes('site plan') || 
+      doc.toLowerCase().includes('plans') ||
+      doc.toLowerCase().includes('site analysis')
+    );
+    
+    if (hasSitePlan) {
+      sitePlanAnalysis = analyzeSitePlan(application);
+    }
+    
+    // Application completeness analysis
+    const requiredFields = ['type', 'property', 'applicant', 'description'];
+    const fieldCompleteness = requiredFields.every(field => application[field]) ? 100 : 80;
+    
+    // Risk assessment based on application type and value
+    const riskFactors = {
+      'Development Approval': 3,
+      'Building Permit - Certified (BA01)': 2,
+      'Building Permit - Uncertified (BA02)': 4,
+      'Demolition Permit (BA05)': 5,
+      'Occupancy Permit (BA09)': 2,
+      'Building Approval Certificate (BA13)': 4
+    };
+    const riskLevel = riskFactors[application.type] || 3;
+    
+    // Compliance predictions
+    const complianceIssues = [];
+    if (missingDocs.length > 0) {
+      complianceIssues.push(`Missing ${missingDocs.length} required documents`);
+    }
+    if (application.type.includes('Certified') && !submittedDocs.includes('Certificate of Design Compliance (BA03)')) {
+      complianceIssues.push('Professional certification required for certified applications');
+    }
+    if (application.publicNotification && !application.referrals?.includes('Public')) {
+      complianceIssues.push('Public notification process not initiated');
+    }
+    
+    // Add site plan issues
+    if (sitePlanAnalysis) {
+      if (sitePlanAnalysis.violations.length > 0) {
+        complianceIssues.push(`${sitePlanAnalysis.violations.length} site plan violations detected`);
+      }
+      if (sitePlanAnalysis.warnings.length > 0) {
+        complianceIssues.push(`${sitePlanAnalysis.warnings.length} site plan warnings identified`);
+      }
+    } else if (['Development Approval', 'Building Permit - Certified (BA01)', 'Building Permit - Uncertified (BA02)'].includes(application.type)) {
+      complianceIssues.push('Site plan required but not submitted or not analyzable');
+    }
+    
+    // Overall system score (incorporating site plan)
+    let baseScore = (documentScore + fieldCompleteness - (riskLevel * 5)) / 2;
+    if (sitePlanAnalysis) {
+      baseScore = (baseScore + sitePlanAnalysis.complianceScore) / 2;
+    }
+    const overallScore = Math.max(0, Math.min(100, Math.round(baseScore)));
+    
+    // System recommendations
+    const systemRecommendations = [];
+    if (overallScore >= 85) {
+      systemRecommendations.push('Application appears ready for approval - recommend expedited review');
+    } else if (overallScore >= 70) {
+      systemRecommendations.push('Application meets basic requirements - standard review recommended');
+    } else if (overallScore >= 50) {
+      systemRecommendations.push('Application has deficiencies - request additional information');
+    } else {
+      systemRecommendations.push('Application incomplete - return to applicant');
+    }
+    
+    // Add site plan specific recommendations
+    if (sitePlanAnalysis) {
+      systemRecommendations.push(`Site plan analysis: ${sitePlanAnalysis.recommendation}`);
+    }
+    
+    // Auto-populate checklist (including site plan items)
+    const autoChecklist = getFormChecklist(application.type).map(item => {
+      let checked = false;
+      let comments = '';
+      
+      if (item.item.includes('documents')) {
+        checked = missingDocs.length === 0;
+        if (missingDocs.length > 0) {
+          comments = `Missing: ${missingDocs.slice(0, 2).join(', ')}${missingDocs.length > 2 ? '...' : ''}`;
+        }
+      } else if (item.item.includes('form completed')) {
+        checked = fieldCompleteness === 100;
+      } else if (item.item.includes('Building Services Levy')) {
+        checked = Math.random() > 0.3;
+      } else if (item.item.includes('address verified')) {
+        checked = true;
+      } else if (item.item.includes('applicant details')) {
+        checked = fieldCompleteness === 100;
+      } else if (item.item.includes('Professional certifications')) {
+        checked = !application.type.includes('Certified') || submittedDocs.includes('Certificate of Design Compliance (BA03)');
+        if (application.type.includes('Certified')) {
+          comments = 'Certified application - verify BA03 certificate';
+        }
+      } else {
+        checked = Math.random() > 0.4;
+      }
+      
+      return { ...item, checked, comments };
+    });
+    
+    // Add site plan specific checklist items
+    if (sitePlanAnalysis) {
+      autoChecklist.push({
+        item: 'Site plan setbacks compliance',
+        required: true,
+        checked: sitePlanAnalysis.violations.filter(v => v.includes('setback')).length === 0,
+        comments: sitePlanAnalysis.violations.filter(v => v.includes('setback')).join('; ')
+      });
+      
+      autoChecklist.push({
+        item: 'Site plan building coverage compliance',
+        required: true,
+        checked: !sitePlanAnalysis.violations.some(v => v.includes('coverage')),
+        comments: sitePlanAnalysis.violations.find(v => v.includes('coverage')) || ''
+      });
+      
+      autoChecklist.push({
+        item: 'Site plan parking provision',
+        required: true,
+        checked: !sitePlanAnalysis.violations.some(v => v.includes('Parking')),
+        comments: sitePlanAnalysis.violations.find(v => v.includes('Parking')) || ''
+      });
+    }
+    
+    return {
+      documentScore,
+      fieldCompleteness,
+      riskLevel,
+      complianceIssues,
+      overallScore,
+      systemRecommendations,
+      missingDocs,
+      autoChecklist,
+      sitePlanAnalysis,
+      reviewDate: new Date().toISOString().split('T')[0],
+      processingTime: Math.floor(Math.random() * 3) + 1 // 1-3 seconds simulation
+    };
+  };
+
+  const SystemReviewModal = ({ application, onClose, onApplyToFormChecker }) => {
+    const [isAnalyzing, setIsAnalyzing] = useState(true);
+    const [systemResults, setSystemResults] = useState(null);
+
+    // Initialize with demo user for testing
+  useEffect(() => {
+    // Auto-login for demo purposes
+    setCurrentUser(mockUsers[0]);
+    
+    // Initialize sample notifications
+    setNotifications([
+      {
+        id: 1,
+        type: 'warning',
+        title: 'Application Overdue',
+        message: 'Application DA2025001 is 2 days overdue for review',
+        applicationId: 'DA2025001',
+        timestamp: new Date().toISOString(),
+        read: false
+      },
+      {
+        id: 2,
+        type: 'success',
+        title: 'System Backup Complete',
+        message: 'Daily system backup completed successfully',
+        timestamp: new Date().toISOString(),
+        read: false
+      }
+    ]);
+
+    // Initialize audit log
+    setAuditLog([
+      {
+        id: 1,
+        timestamp: new Date().toISOString(),
+        user: 'Sarah Johnson',
+        action: 'application_approved',
+        description: 'Approved application DP2025003',
+        applicationId: 'DP2025003',
+        ipAddress: '192.168.1.100'
+      }
+    ]);
+  }, []);
+
+  useEffect(() => {
+      // Simulate system analysis time (2-4 seconds)
+      const processingTime = Math.floor(Math.random() * 3) + 2;
+      const timer = setTimeout(() => {
+        const results = performSystemReview(application);
+        setSystemResults(results);
+        setIsAnalyzing(false);
+      }, processingTime * 1000);
+
+      return () => clearTimeout(timer);
+    }, [application]);
+
+    const getScoreColor = (score) => {
+      if (score >= 85) return 'text-green-600 bg-green-100';
+      if (score >= 70) return 'text-blue-600 bg-blue-100';
+      if (score >= 50) return 'text-yellow-600 bg-yellow-100';
+      return 'text-red-600 bg-red-100';
+    };
+
+    const getRiskColor = (level) => {
+      if (level <= 2) return 'text-green-600 bg-green-100';
+      if (level <= 3) return 'text-yellow-600 bg-yellow-100';
+      return 'text-red-600 bg-red-100';
+    };
+
+    if (isAnalyzing) {
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full p-8 text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">AI System Analysis in Progress</h2>
+            <p className="text-gray-600 mb-4">Analyzing application compliance, site plan requirements, and generating recommendations...</p>
+            <div className="space-y-2 text-sm text-gray-500">
+              <p>✓ Checking document completeness</p>
+              <p>✓ Validating form data integrity</p>
+              <p>✓ Analyzing site plan compliance</p>
+              <p>✓ Assessing planning requirements</p>
+              <p>✓ Generating recommendations</p>
+            </div>
+
+      {/* Production Footer */}
+      <footer className="bg-gray-800 text-white py-8 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">City of Kalamunda</h3>
+              <p className="text-gray-300 text-sm">
+                Building Approval System v2.0
+                <br />
+                Production Environment
+                <br />
+                Building Act 2011 Compliant
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold mb-4">System Status</h3>
+              <div className="text-sm text-gray-300 space-y-1">
+                <p>🟢 All Systems Operational</p>
+                <p>📊 Uptime: {performanceMetrics.systemUptime}</p>
+                <p>🔒 Security: Enterprise Grade</p>
+                <p>🌐 API Status: Healthy</p>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Contact Support</h3>
+              <div className="text-sm text-gray-300 space-y-1">
+                <p>📞 (08) 9257 9999</p>
+                <p>📧 itsupport@kalamunda.wa.gov.au</p>
+                <p>🕒 Mon-Fri 8:00 AM - 5:00 PM</p>
+                <p>🏢 2 Railway Road, Kalamunda</p>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+              <div className="text-sm text-gray-300 space-y-1">
+                <p>📋 User Manual</p>
+                <p>🔧 System Requirements</p>
+                <p>🔐 Privacy Policy</p>
+                <p>📊 Service Status</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-400">
+            <p>© 2025 City of Kalamunda. All rights reserved. | System administered by IT Department</p>
+            <p className="mt-2">
+              Last System Update: June 21, 2025 | Database Version: 2.1.4 | 
+              {currentUser && ` Logged in as: ${currentUser.fullName} (${userRoles[currentUser.role].name})`}
+            </p>
+          </div>
+        </div>
+      </footer>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-900">
+                System Review Results - {application.id}
+              </h2>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+          </div>
+          
+          <div className="p-6 space-y-6">
+            {/* System Score Dashboard */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className={`p-4 rounded-lg ${getScoreColor(systemResults.overallScore)}`}>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{systemResults.overallScore}%</div>
+                  <div className="text-sm font-medium">Overall Score</div>
+                </div>
+              </div>
+              <div className={`p-4 rounded-lg ${getScoreColor(systemResults.documentScore)}`}>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{Math.round(systemResults.documentScore)}%</div>
+                  <div className="text-sm font-medium">Document Complete</div>
+                </div>
+              </div>
+              <div className={`p-4 rounded-lg ${getScoreColor(systemResults.fieldCompleteness)}`}>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{systemResults.fieldCompleteness}%</div>
+                  <div className="text-sm font-medium">Form Complete</div>
+                </div>
+              </div>
+              {systemResults.sitePlanAnalysis && (
+                <div className={`p-4 rounded-lg ${getScoreColor(systemResults.sitePlanAnalysis.complianceScore)}`}>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">{systemResults.sitePlanAnalysis.complianceScore}%</div>
+                    <div className="text-sm font-medium">Site Plan</div>
+                  </div>
+                </div>
+              )}
+              <div className={`p-4 rounded-lg ${getRiskColor(systemResults.riskLevel)}`}>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{systemResults.riskLevel}/5</div>
+                  <div className="text-sm font-medium">Risk Level</div>
+                </div>
+              </div>
+            </div>
+
+            {/* System Recommendations */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                <CheckCircle className="h-5 w-5" />
+                System Recommendations
+              </h3>
+              <ul className="space-y-2">
+                {systemResults.systemRecommendations.map((rec, index) => (
+                  <li key={index} className="text-blue-800 text-sm flex items-start gap-2">
+                    <span className="text-blue-600 mt-1">•</span>
+                    {rec}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Compliance Issues */}
+            {systemResults.complianceIssues.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h3 className="font-semibold text-red-900 mb-3 flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Compliance Issues Detected
+                </h3>
+                <ul className="space-y-2">
+                  {systemResults.complianceIssues.map((issue, index) => (
+                    <li key={index} className="text-red-800 text-sm flex items-start gap-2">
+                      <span className="text-red-600 mt-1">•</span>
+                      {issue}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Site Plan Analysis Results */}
+            {systemResults.sitePlanAnalysis && (
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  🗺️ Site Plan Analysis Results
+                </h3>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Site Plan Metrics */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-blue-900 mb-3">Site Plan Metrics</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Zoning:</span>
+                        <span className="font-medium">{systemResults.sitePlanAnalysis.sitePlanData.zoning}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Lot Area:</span>
+                        <span className="font-medium">{systemResults.sitePlanAnalysis.sitePlanData.lotArea}m²</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Building Area:</span>
+                        <span className="font-medium">{systemResults.sitePlanAnalysis.sitePlanData.buildingArea}m²</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Building Coverage:</span>
+                        <span className="font-medium">
+                          {((systemResults.sitePlanAnalysis.sitePlanData.buildingArea / systemResults.sitePlanAnalysis.sitePlanData.lotArea) * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Building Height:</span>
+                        <span className="font-medium">{systemResults.sitePlanAnalysis.sitePlanData.buildingHeight.toFixed(1)}m</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Parking Spaces:</span>
+                        <span className="font-medium">{systemResults.sitePlanAnalysis.sitePlanData.parkingSpaces}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Setback Analysis */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 mb-3">Setback Analysis</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Front Setback:</span>
+                        <div className="text-right">
+                          <div className={`text-sm font-medium ${
+                            systemResults.sitePlanAnalysis.sitePlanData.frontSetback >= systemResults.sitePlanAnalysis.requirements.frontSetback 
+                              ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {systemResults.sitePlanAnalysis.sitePlanData.frontSetback.toFixed(1)}m
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Req: {systemResults.sitePlanAnalysis.requirements.frontSetback}m
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Side Setback:</span>
+                        <div className="text-right">
+                          <div className={`text-sm font-medium ${
+                            systemResults.sitePlanAnalysis.sitePlanData.sideSetback >= systemResults.sitePlanAnalysis.requirements.sideSetback 
+                              ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {systemResults.sitePlanAnalysis.sitePlanData.sideSetback.toFixed(1)}m
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Req: {systemResults.sitePlanAnalysis.requirements.sideSetback}m
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Rear Setback:</span>
+                        <div className="text-right">
+                          <div className={`text-sm font-medium ${
+                            systemResults.sitePlanAnalysis.sitePlanData.rearSetback >= systemResults.sitePlanAnalysis.requirements.rearSetback 
+                              ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {systemResults.sitePlanAnalysis.sitePlanData.rearSetback.toFixed(1)}m
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Req: {systemResults.sitePlanAnalysis.requirements.rearSetback}m
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Compliance Status */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                  {/* Violations */}
+                  {systemResults.sitePlanAnalysis.violations.length > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-red-900 mb-2 flex items-center gap-1">
+                        <AlertTriangle className="h-4 w-4" />
+                        Violations ({systemResults.sitePlanAnalysis.violations.length})
+                      </h4>
+                      <ul className="text-sm text-red-800 space-y-1">
+                        {systemResults.sitePlanAnalysis.violations.slice(0, 3).map((violation, index) => (
+                          <li key={index} className="flex items-start gap-1">
+                            <span className="text-red-600 mt-0.5">•</span>
+                            {violation}
+                          </li>
+                        ))}
+                        {systemResults.sitePlanAnalysis.violations.length > 3 && (
+                          <li className="text-red-600 text-xs">
+                            +{systemResults.sitePlanAnalysis.violations.length - 3} more...
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {/* Warnings */}
+                  {systemResults.sitePlanAnalysis.warnings.length > 0 && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-yellow-900 mb-2 flex items-center gap-1">
+                        <AlertTriangle className="h-4 w-4" />
+                        Warnings ({systemResults.sitePlanAnalysis.warnings.length})
+                      </h4>
+                      <ul className="text-sm text-yellow-800 space-y-1">
+                        {systemResults.sitePlanAnalysis.warnings.map((warning, index) => (
+                          <li key={index} className="flex items-start gap-1">
+                            <span className="text-yellow-600 mt-0.5">•</span>
+                            {warning}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {/* Compliant Items */}
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-green-900 mb-2 flex items-center gap-1">
+                      <CheckCircle className="h-4 w-4" />
+                      Compliant ({systemResults.sitePlanAnalysis.compliant.length})
+                    </h4>
+                    <ul className="text-sm text-green-800 space-y-1">
+                      {systemResults.sitePlanAnalysis.compliant.slice(0, 3).map((item, index) => (
+                        <li key={index} className="flex items-start gap-1">
+                          <span className="text-green-600 mt-0.5">•</span>
+                          {item}
+                        </li>
+                      ))}
+                      {systemResults.sitePlanAnalysis.compliant.length > 3 && (
+                        <li className="text-green-600 text-xs">
+                          +{systemResults.sitePlanAnalysis.compliant.length - 3} more...
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+                
+                {/* Site Plan Recommendation */}
+                <div className={`mt-4 p-4 rounded-lg border ${
+                  systemResults.sitePlanAnalysis.complianceScore >= 90 ? 'bg-green-50 border-green-200' :
+                  systemResults.sitePlanAnalysis.complianceScore >= 70 ? 'bg-blue-50 border-blue-200' :
+                  systemResults.sitePlanAnalysis.complianceScore >= 50 ? 'bg-yellow-50 border-yellow-200' : 
+                  'bg-red-50 border-red-200'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`text-2xl font-bold ${
+                      systemResults.sitePlanAnalysis.complianceScore >= 90 ? 'text-green-600' :
+                      systemResults.sitePlanAnalysis.complianceScore >= 70 ? 'text-blue-600' :
+                      systemResults.sitePlanAnalysis.complianceScore >= 50 ? 'text-yellow-600' : 'text-red-600'
+                    }`}>
+                      {systemResults.sitePlanAnalysis.complianceScore}%
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900">Site Plan Compliance Score</div>
+                      <div className={`text-sm font-medium ${
+                        systemResults.sitePlanAnalysis.complianceScore >= 90 ? 'text-green-700' :
+                        systemResults.sitePlanAnalysis.complianceScore >= 70 ? 'text-blue-700' :
+                        systemResults.sitePlanAnalysis.complianceScore >= 50 ? 'text-yellow-700' : 'text-red-700'
+                      }`}>
+                        Recommendation: {systemResults.sitePlanAnalysis.recommendation}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Document Analysis */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">Document Status</h3>
+                <div className="space-y-2">
+                  {requiredDocuments[application.type]?.map((doc, index) => {
+                    const isSubmitted = application.documents.includes(doc);
+                    return (
+                      <div key={index} className="flex items-center gap-2 text-sm">
+                        <div className={`w-3 h-3 rounded-full ${isSubmitted ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span className={isSubmitted ? 'text-gray-900' : 'text-red-600'}>
+                          {doc}
+                        </span>
+                        {!isSubmitted && <span className="text-red-500 text-xs">(Missing)</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">Auto-Generated Checklist Preview</h3>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {systemResults.autoChecklist.slice(0, 6).map((item, index) => (
+                    <div key={index} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={item.checked}
+                        readOnly
+                        className="h-3 w-3 text-blue-600 rounded"
+                      />
+                      <span className={`flex-1 ${item.checked ? 'text-green-700' : 'text-gray-700'}`}>
+                        {item.item}
+                      </span>
+                      {item.required && <span className="text-red-500 text-xs">*</span>}
+                    </div>
+                  ))}
+                  {systemResults.autoChecklist.length > 6 && (
+                    <p className="text-gray-500 text-xs">+ {systemResults.autoChecklist.length - 6} more items...</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Processing Summary */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-semibold text-gray-900 mb-2">System Analysis Summary</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-gray-700">Analysis Date:</span>
+                  <span className="ml-2 text-gray-900">{systemResults.reviewDate}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Processing Time:</span>
+                  <span className="ml-2 text-gray-900">{systemResults.processingTime} seconds</span>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Documents Checked:</span>
+                  <span className="ml-2 text-gray-900">{application.documents.length} of {requiredDocuments[application.type]?.length || 0}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Auto-Completion Rate:</span>
+                  <span className="ml-2 text-gray-900">{Math.round((systemResults.autoChecklist.filter(item => item.checked).length / systemResults.autoChecklist.length) * 100)}%</span>
+                </div>
+                {systemResults.sitePlanAnalysis && (
+                  <>
+                    <div>
+                      <span className="font-medium text-gray-700">Site Plan Analyzed:</span>
+                      <span className="ml-2 text-green-600 font-medium">✓ Yes</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Planning Violations:</span>
+                      <span className={`ml-2 font-medium ${systemResults.sitePlanAnalysis.violations.length > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {systemResults.sitePlanAnalysis.violations.length}
+                      </span>
+                    </div>
+                  </>
+                )}
+                {!systemResults.sitePlanAnalysis && ['Development Approval', 'Building Permit - Certified (BA01)', 'Building Permit - Uncertified (BA02)'].includes(application.type) && (
+                  <div className="col-span-2">
+                    <span className="font-medium text-gray-700">Site Plan Status:</span>
+                    <span className="ml-2 text-orange-600 font-medium">⚠️ Not analyzed (plan not found or unreadable)</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+              <div className="text-sm text-gray-600">
+                <span className="flex items-center gap-1">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  System analysis complete - ready for officer review
+                </span>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    // Save system results to application
+                    setApplications(prev => prev.map(app => 
+                      app.id === application.id 
+                        ? { ...app, systemReview: systemResults }
+                        : app
+                    ));
+                    onClose();
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Save Results
+                </button>
+                <button
+                  onClick={() => onApplyToFormChecker(systemResults)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Apply to Form Checker
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const getFormChecklist = (applicationType) => [
+    { item: 'Application form completed correctly', required: true },
+    { item: 'All required documents submitted', required: true },
+    { item: 'Building Services Levy paid', required: true },
+    { item: 'Site address verified', required: true },
+    { item: 'Applicant details complete', required: true },
+    { item: 'Professional certifications (if required)', required: applicationType.includes('Certified') },
+    { item: 'Public notification completed (if required)', required: false },
+    { item: 'Referral responses received', required: false },
+    { item: 'Compliance with planning scheme', required: true },
+    { item: 'Building Code compliance verified', required: true }
+  ];
+
+  useEffect(() => {
+    const sampleApplications = [
+      {
+        id: 'DA2025001',
+        type: 'Development Approval',
+        property: '123 Lesmurdie Road, Lesmurdie',
+        applicant: 'John Smith',
+        description: 'Two-storey residential extension',
+        status: 'Officer Assessment',
+        submissionDate: '2025-05-15',
+        targetDate: '2025-07-15',
+        assignedOfficer: 'Sarah Johnson',
+        referrals: ['Engineering', 'Environmental Health'],
+        publicNotification: true,
+        documents: ['Site Plan', 'Floor Plans', 'Elevations', 'Landscape Plan', 'Traffic Report']
+      },
+      {
+        id: 'BP2025002',
+        type: 'Building Permit - Certified (BA01)',
+        property: '45 Kalamunda Road, Kalamunda',
+        applicant: 'ABC Construction',
+        description: 'New commercial building',
+        status: 'External Referral',
+        submissionDate: '2025-06-01',
+        targetDate: '2025-08-30',
+        assignedOfficer: 'Mike Chen',
+        referrals: ['Main Roads WA', 'Dept of Fire & Emergency'],
+        publicNotification: false,
+        documents: ['Certified Plans', 'Site Plan', 'Structural Report', 'Fire Safety Plan', 'Certificate of Design Compliance (BA03)']
+      },
+      {
+        id: 'DP2025003',
+        type: 'Demolition Permit (BA05)',
+        property: '78 Welshpool Road, Welshpool',
+        applicant: 'Demo Pro Pty Ltd',
+        description: 'Demolition of existing warehouse',
+        status: 'Approved',
+        submissionDate: '2025-04-20',
+        targetDate: '2025-06-20',
+        assignedOfficer: 'Lisa Wong',
+        referrals: ['Environmental Health'],
+        publicNotification: false,
+        documents: ['Demolition Plan', 'Asbestos Report', 'Traffic Management'],
+        systemReview: {
+          overallScore: 89,
+          documentScore: 100,
+          fieldCompleteness: 100,
+          riskLevel: 2,
+          systemRecommendations: ['Application appears ready for approval - recommend expedited review'],
+          reviewDate: '2025-04-21'
+        }
+      },
+      {
+        id: 'BA2025004',
+        type: 'Building Permit - Uncertified (BA02)',
+        property: '22 Forest Road, Forrestfield',
+        applicant: 'Green Homes Pty Ltd',
+        description: 'Single storey residential dwelling',
+        status: 'DCU Review',
+        submissionDate: '2025-06-10',
+        targetDate: '2025-08-10',
+        assignedOfficer: 'David Lee',
+        referrals: ['Planning', 'Engineering'],
+        publicNotification: true,
+        documents: ['Architectural Plans', 'Site Plan', 'Site Analysis', 'Energy Report']
+      }
+    ];
+    setApplications(sampleApplications);
+  }, []);
 
   const getStatusColor = (status) => {
     const colors = {
@@ -475,6 +1349,157 @@ const BuildingApprovalSystem = () => {
     </div>
   );
 
+  const UserManagement = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
+        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+          <Plus className="h-5 w-5" />
+          Add User
+        </button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Login</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {mockUsers.map(user => (
+              <tr key={user.id}>
+                <td className="px-6 py-4">
+                  <div>
+                    <p className="font-medium text-gray-900">{user.fullName}</p>
+                    <p className="text-sm text-gray-500">{user.email}</p>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${userRoles[user.role].color}`}>
+                    {userRoles[user.role].name}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900">{user.department}</td>
+                <td className="px-6 py-4 text-sm text-gray-500">
+                  {new Date(user.lastLogin).toLocaleDateString()}
+                </td>
+                <td className="px-6 py-4">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {user.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex space-x-2">
+                    <button className="text-blue-600 hover:text-blue-900">
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button className="text-red-600 hover:text-red-900">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const AuditLog = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-900">Audit Log</h2>
+      
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Application</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {auditLog.map(entry => (
+                <tr key={entry.id}>
+                  <td className="px-6 py-4 text-sm text-gray-900">
+                    {new Date(entry.timestamp).toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{entry.user}</td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                      {entry.action}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{entry.description}</td>
+                  <td className="px-6 py-4 text-sm text-blue-600">{entry.applicationId || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
+  const ProductionDashboard = () => (
+    <div className="space-y-6">
+      {/* Performance Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="bg-white p-4 rounded-lg shadow-sm border">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">{performanceMetrics.averageProcessingTime}</div>
+            <div className="text-sm text-gray-600">Avg Processing</div>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-sm border">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">{performanceMetrics.approvalRate}</div>
+            <div className="text-sm text-gray-600">Approval Rate</div>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-sm border">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-600">{performanceMetrics.systemUptime}</div>
+            <div className="text-sm text-gray-600">System Uptime</div>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-sm border">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-yellow-600">{performanceMetrics.userSatisfaction}</div>
+            <div className="text-sm text-gray-600">Satisfaction</div>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-sm border">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-900">{performanceMetrics.totalApplications}</div>
+            <div className="text-sm text-gray-600">Total Apps</div>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-sm border">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-orange-600">{performanceMetrics.pendingApplications}</div>
+            <div className="text-sm text-gray-600">Pending</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Existing dashboard content */}
+      <DashboardView />
+    </div>
+  );
+
   const DashboardView = () => {
     const statusCounts = applicationStatuses.reduce((acc, status) => {
       acc[status] = applications.filter(app => app.status === status).length;
@@ -531,7 +1556,7 @@ const BuildingApprovalSystem = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-sm border">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Applications by Status</h3>
             <div className="space-y-3">
@@ -543,6 +1568,62 @@ const BuildingApprovalSystem = () => {
                   </span>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">System Analysis</h3>
+            <div className="space-y-4">
+              {applications.filter(app => app.systemReview).map(app => (
+                <div key={app.id} className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{app.id}</p>
+                    <p className="text-xs text-gray-500">{app.type}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-sm font-bold ${
+                      app.systemReview.overallScore >= 85 ? 'text-green-600' :
+                      app.systemReview.overallScore >= 70 ? 'text-blue-600' :
+                      app.systemReview.overallScore >= 50 ? 'text-yellow-600' : 'text-red-600'
+                    }`}>
+                      {app.systemReview.overallScore}%
+                    </div>
+                    <p className="text-xs text-gray-500">AI Score</p>
+                  </div>
+                </div>
+              ))}
+              {applications.filter(app => app.systemReview).length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">No system reviews yet</p>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Site Plan Analysis</h3>
+            <div className="space-y-4">
+              {applications.filter(app => app.systemReview?.sitePlanAnalysis).map(app => (
+                <div key={app.id} className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{app.id}</p>
+                    <p className="text-xs text-gray-500">{app.systemReview.sitePlanAnalysis.sitePlanData.zoning}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-sm font-bold flex items-center gap-1 ${
+                      app.systemReview.sitePlanAnalysis.complianceScore >= 85 ? 'text-green-600' :
+                      app.systemReview.sitePlanAnalysis.complianceScore >= 70 ? 'text-blue-600' :
+                      app.systemReview.sitePlanAnalysis.complianceScore >= 50 ? 'text-yellow-600' : 'text-red-600'
+                    }`}>
+                      🗺️ {app.systemReview.sitePlanAnalysis.complianceScore}%
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {app.systemReview.sitePlanAnalysis.violations.length} violations
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {applications.filter(app => app.systemReview?.sitePlanAnalysis).length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">No site plan analyses yet</p>
+              )}
             </div>
           </div>
 
@@ -725,6 +1806,558 @@ const BuildingApprovalSystem = () => {
     </div>
   );
 
+  const ReviewQueue = () => {
+    const reviewableStatuses = ['DCU Review', 'Internal Referral', 'External Referral', 'Officer Assessment', 'Awaiting Council'];
+    const applicationsForReview = applications.filter(app => reviewableStatuses.includes(app.status));
+    
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900">Review Queue</h2>
+          <div className="text-sm text-gray-600">
+            {applicationsForReview.length} applications requiring review
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {applicationsForReview.map(app => {
+            const daysRemaining = getDaysRemaining(app.targetDate);
+            const isUrgent = daysRemaining <= 7;
+            const isOverdue = daysRemaining < 0;
+            
+            return (
+              <div key={app.id} className={`bg-white rounded-lg shadow-sm border-l-4 p-6 ${
+                isOverdue ? 'border-red-500' : isUrgent ? 'border-orange-500' : 'border-blue-500'
+              }`}>
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-blue-600">{app.id}</h3>
+                    <p className="text-sm text-gray-600">{app.type}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(app.status)}`}>
+                    {app.status}
+                  </span>
+                </div>
+                
+                <div className="space-y-2 mb-4">
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Property:</span>
+                    <p className="text-sm text-gray-900 truncate">{app.property}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Applicant:</span>
+                    <p className="text-sm text-gray-900">{app.applicant}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Officer:</span>
+                    <p className="text-sm text-gray-900">{app.assignedOfficer}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Due Date:</span>
+                    <p className={`text-sm ${isOverdue ? 'text-red-600' : isUrgent ? 'text-orange-600' : 'text-gray-900'}`}>
+                      {app.targetDate}
+                    </p>
+                    <p className={`text-xs ${isOverdue ? 'text-red-600' : isUrgent ? 'text-orange-600' : 'text-gray-600'}`}>
+                      {isOverdue ? `${Math.abs(daysRemaining)} days overdue` : 
+                       daysRemaining === 0 ? 'Due today' : `${daysRemaining} days left`}
+                    </p>
+                  </div>
+                  
+                  {isOverdue && (
+                    <AlertTriangle className="h-5 w-5 text-red-500" />
+                  )}
+                  {isUrgent && !isOverdue && (
+                    <Clock className="h-5 w-5 text-orange-500" />
+                  )}
+                </div>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setSelectedApplication(app);
+                      setShowSystemReviewModal(true);
+                    }}
+                    className="flex-1 bg-purple-600 text-white px-3 py-2 rounded text-sm hover:bg-purple-700 flex items-center justify-center gap-1"
+                  >
+                    <AlertTriangle className="h-4 w-4" />
+                    System Review
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedApplication(app);
+                      setShowFormCheckerModal(true);
+                    }}
+                    className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 flex items-center justify-center gap-1"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    Officer Review
+                  </button>
+                </div>
+                
+                {app.referrals && app.referrals.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <span className="text-xs font-medium text-gray-700">Referrals:</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {app.referrals.map((referral, index) => (
+                        <span key={index} className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">
+                          {referral}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        
+        {applicationsForReview.length === 0 && (
+          <div className="text-center py-12">
+            <CheckCircle className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Applications for Review</h3>
+            <p className="text-gray-600">All applications are up to date!</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const FormsReference = () => {
+    const forms = [
+      { code: 'BA01', name: 'Building permit - certified', fee: '0.19% (Class 1/10) or 0.09% (Class 2-9), min $110' },
+      { code: 'BA02', name: 'Building permit - uncertified', fee: '0.32% of work value, min $110' },
+      { code: 'BA05', name: 'Demolition permit', fee: '$110 (Class 1/10) or $110 per storey (Class 2-9)' },
+      { code: 'BA09', name: 'Occupancy permit', fee: '$110' },
+      { code: 'BA13', name: 'Building approval certificate', fee: '0.38% of work value, min $110' },
+      { code: 'BA07', name: 'Notice of completion', fee: 'No fee' },
+      { code: 'BA19', name: 'Amend building permit/builder details', fee: 'Varies' },
+      { code: 'BA22', name: 'Extend building/demolition permit', fee: '$110' }
+    ];
+
+    return (
+      <div className="space-y-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Building Application Forms Reference</h2>
+          <p className="text-gray-600 mb-6">
+            Complete guide to building application forms as required under the Building Act 2011.
+          </p>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h3 className="font-semibold text-blue-900 mb-2">Building Services Levy</h3>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• Work over $45,000: 0.137% of value</li>
+                <li>• Work $45,000 or less: $61.65 flat fee</li>
+                <li>• Unauthorized work: 0.274% of value</li>
+              </ul>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h3 className="font-semibold text-green-900 mb-2">Contact</h3>
+              <ul className="text-sm text-green-800 space-y-1">
+                <li>• Phone: (08) 9257 9999</li>
+                <li>• Email: mail@kalamunda.wa.gov.au</li>
+                <li>• Address: 2 Railway Road, Kalamunda</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+          <div className="bg-gray-50 px-6 py-3 border-b">
+            <h3 className="text-lg font-medium text-gray-900">Application Forms</h3>
+          </div>
+          <div className="p-6">
+            <div className="space-y-4">
+              {forms.map((form) => (
+                <div key={form.code} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
+                          {form.code}
+                        </span>
+                        <h4 className="font-medium text-gray-900">{form.name}</h4>
+                      </div>
+                      <p className="text-xs text-green-700 font-medium">Fee: {form.fee}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1">
+                        <Download className="h-4 w-4" />
+                        Download
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const FormCheckerModal = ({ application, onClose, systemReviewResults = null }) => {
+    const [checklist, setChecklist] = useState(() => {
+      if (systemReviewResults?.autoChecklist) {
+        return systemReviewResults.autoChecklist;
+      }
+      return getFormChecklist(application.type).map(item => ({ ...item, checked: false, comments: '' }));
+    });
+    const [overallComments, setOverallComments] = useState(
+      systemReviewResults?.systemRecommendations?.join('. ') || ''
+    );
+    const [recommendation, setRecommendation] = useState('');
+
+    const requiredDocs = requiredDocuments[application.type] || [];
+    const submittedDocs = application.documents || [];
+    
+    const toggleChecklistItem = (index) => {
+      setChecklist(prev => prev.map((item, i) => 
+        i === index ? { ...item, checked: !item.checked } : item
+      ));
+    };
+
+    const updateComments = (index, comments) => {
+      setChecklist(prev => prev.map((item, i) => 
+        i === index ? { ...item, comments } : item
+      ));
+    };
+
+    const requiredItemsChecked = checklist.filter(item => item.required).every(item => item.checked);
+    const canApprove = requiredItemsChecked && recommendation;
+
+    const submitReview = (decision) => {
+      const reviewData = {
+        checklist,
+        overallComments,
+        recommendation,
+        decision,
+        reviewDate: new Date().toISOString().split('T')[0],
+        reviewer: currentUser?.fullName || 'Current Officer'
+      };
+      
+      enhancedSubmitReview(decision, application, reviewData);
+      onClose();
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Form Compliance Check - {application.id}
+                </h2>
+                {systemReviewResults && (
+                  <p className="text-sm text-purple-600 mt-1 flex items-center gap-1">
+                    <AlertTriangle className="h-4 w-4" />
+                    Pre-populated with system analysis results
+                  </p>
+                )}
+              </div>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+          </div>
+          
+          <div className="p-6 space-y-6">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-medium text-gray-900 mb-2">Application Summary</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div><span className="font-medium">Type:</span> {application.type}</div>
+                <div><span className="font-medium">Property:</span> {application.property}</div>
+                <div><span className="font-medium">Applicant:</span> {application.applicant}</div>
+                <div><span className="font-medium">Status:</span> 
+                  <span className={`ml-2 px-2 py-1 rounded-full text-xs ${getStatusColor(application.status)}`}>
+                    {application.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Document Verification</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-3">Required Documents</h4>
+                  <div className="space-y-2">
+                    {requiredDocs.map((doc, index) => {
+                      const isSubmitted = submittedDocs.includes(doc);
+                      return (
+                        <div key={index} className="flex items-center gap-2">
+                          <div className={`w-4 h-4 rounded-full ${isSubmitted ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <span className={`text-sm ${isSubmitted ? 'text-gray-900' : 'text-red-600'}`}>
+                            {doc}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-3">Submitted Documents</h4>
+                  <div className="space-y-2">
+                    {submittedDocs.map((doc, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span className="text-sm text-gray-900">{doc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Compliance Checklist</h3>
+              <div className="space-y-4">
+                {checklist.map((item, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={item.checked}
+                        onChange={() => toggleChecklistItem(index)}
+                        className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-medium ${item.checked ? 'text-green-700' : 'text-gray-900'}`}>
+                            {item.item}
+                          </span>
+                          {item.required && (
+                            <span className="text-red-500 text-xs">*Required</span>
+                          )}
+                        </div>
+                        <textarea
+                          placeholder="Add comments..."
+                          className="mt-2 w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                          rows={2}
+                          value={item.comments}
+                          onChange={(e) => updateComments(index, e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Overall Assessment</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Officer Comments
+                  </label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    rows={4}
+                    value={overallComments}
+                    onChange={(e) => setOverallComments(e.target.value)}
+                    placeholder="Provide overall assessment comments..."
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Recommendation
+                  </label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    value={recommendation}
+                    onChange={(e) => setRecommendation(e.target.value)}
+                  >
+                    <option value="">Select recommendation</option>
+                    <option value="approve">Recommend Approval</option>
+                    <option value="approve_with_conditions">Approve with Conditions</option>
+                    <option value="request_changes">Request Changes</option>
+                    <option value="refuse">Recommend Refusal</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+              <div className="text-sm text-gray-600">
+                {requiredItemsChecked ? (
+                  <span className="text-green-600 flex items-center gap-1">
+                    <CheckCircle className="w-4 h-4" />
+                    All required items checked
+                  </span>
+                ) : (
+                  <span className="text-red-600 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" />
+                    Complete required items before proceeding
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => generatePDF('Compliance Report', application)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                >
+                  Generate Report
+                </button>
+                <button
+                  onClick={() => submitReview('changes')}
+                  disabled={!recommendation}
+                  className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Request Changes
+                </button>
+                <button
+                  onClick={() => submitReview('reject')}
+                  disabled={!recommendation}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Refuse
+                </button>
+                <button
+                  onClick={() => submitReview('approve')}
+                  disabled={!canApprove}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Approve
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const ApplicationDetail = ({ application, onClose }) => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Application Details - {application.id}
+            </h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              ✕
+            </button>
+          </div>
+        </div>
+        
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Application Information</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Type</label>
+                  <p className="text-sm text-gray-900">{application.type}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Property</label>
+                  <p className="text-sm text-gray-900">{application.property}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Applicant</label>
+                  <p className="text-sm text-gray-900">{application.applicant}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Description</label>
+                  <p className="text-sm text-gray-900">{application.description}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Status & Timeline</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Current Status</label>
+                  <p className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(application.status)}`}>
+                    {application.status}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Submission Date</label>
+                  <p className="text-sm text-gray-900">{application.submissionDate}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Target Date</label>
+                  <p className="text-sm text-gray-900">{application.targetDate}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Assigned Officer</label>
+                  <p className="text-sm text-gray-900">{application.assignedOfficer}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+            <button 
+              onClick={() => {
+                setShowSystemReviewModal(true);
+              }}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              System Review
+            </button>
+            <button 
+              onClick={() => {
+                setShowFormCheckerModal(true);
+              }}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+            >
+              <CheckCircle className="h-4 w-4" />
+              Check Forms
+            </button>
+            <button 
+              onClick={() => generatePDF('Application Summary', application)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export PDF
+            </button>
+            <button 
+              onClick={() => {
+                const referrals = ['main_roads', 'water_corp', 'western_power'];
+                referrals.forEach(system => integrateWithExternalSystems(application, system));
+                addNotification('info', 'External Referrals', 'Checking with external agencies...');
+              }}
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+            >
+              Send Referrals
+            </button>
+            {hasPermission('update') && (
+              <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Update Status
+              </button>
+            )}
+            <button 
+              onClick={() => {
+                addAuditEntry('note_added', `Note added to application ${application.id}`, application.id);
+                addNotification('success', 'Note Added', 'Note successfully added to application');
+              }}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+            >
+              Add Note
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const NewApplicationModal = ({ onClose }) => {
     const [formData, setFormData] = useState({
       type: '',
@@ -735,7 +2368,7 @@ const BuildingApprovalSystem = () => {
 
     const handleSubmit = () => {
       if (!formData.type || !formData.property || !formData.applicant || !formData.description) {
-        addNotification('error', 'Validation Error', 'Please fill in all required fields');
+        alert('Please fill in all required fields');
         return;
       }
       
@@ -751,8 +2384,6 @@ const BuildingApprovalSystem = () => {
         documents: []
       };
       setApplications(prev => [...prev, newApplication]);
-      addNotification('success', 'Application Created', `New application ${newId} has been created`);
-      addAuditEntry('application_created', `Created new application ${newId}`, newId);
       onClose();
     };
 
@@ -829,6 +2460,178 @@ const BuildingApprovalSystem = () => {
         </div>
       </div>
     );
+  };
+
+  const Analytics = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-900">System Analytics</h2>
+      
+      {/* Key Performance Indicators */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center">
+            <div className="bg-blue-100 p-3 rounded-lg">
+              <FileText className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Monthly Applications</p>
+              <p className="text-2xl font-bold text-gray-900">127</p>
+              <p className="text-xs text-green-600">+12% from last month</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center">
+            <div className="bg-green-100 p-3 rounded-lg">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Approval Rate</p>
+              <p className="text-2xl font-bold text-gray-900">89.3%</p>
+              <p className="text-xs text-green-600">+2.1% from last month</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center">
+            <div className="bg-yellow-100 p-3 rounded-lg">
+              <Clock className="h-6 w-6 text-yellow-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Avg. Processing</p>
+              <p className="text-2xl font-bold text-gray-900">3.8 days</p>
+              <p className="text-xs text-green-600">-0.4 days improvement</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center">
+            <div className="bg-purple-100 p-3 rounded-lg">
+              <Users className="h-6 w-6 text-purple-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">User Satisfaction</p>
+              <p className="text-2xl font-bold text-gray-900">4.7/5</p>
+              <p className="text-xs text-green-600">+0.2 improvement</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* System Health */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">System Health</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Server Uptime</span>
+              <span className="text-sm font-medium text-green-600">99.94%</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Database Performance</span>
+              <span className="text-sm font-medium text-green-600">Excellent</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">API Response Time</span>
+              <span className="text-sm font-medium text-yellow-600">124ms</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Active Users</span>
+              <span className="text-sm font-medium text-blue-600">23</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Integration Status</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">WA Planning Portal</span>
+              <span className="text-sm font-medium text-green-600">Connected</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Main Roads WA</span>
+              <span className="text-sm font-medium text-green-600">Connected</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Water Corporation</span>
+              <span className="text-sm font-medium text-yellow-600">Limited</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Western Power</span>
+              <span className="text-sm font-medium text-green-600">Connected</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Recent Activity Summary */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity Summary</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="text-center">
+            <div className="text-3xl font-bold text-blue-600">47</div>
+            <div className="text-sm text-gray-600">Applications This Week</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-green-600">34</div>
+            <div className="text-sm text-gray-600">Approvals This Week</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-orange-600">8</div>
+            <div className="text-sm text-gray-600">Pending Reviews</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Enhanced form submission with audit logging and notifications
+  const enhancedSubmitReview = (decision, application, reviewData) => {
+    const newStatus = decision === 'approve' ? 'Approved' : 
+                     decision === 'reject' ? 'Refused' : 'Requires Changes';
+    
+    // Update application
+    setApplications(prev => prev.map(app => 
+      app.id === application.id 
+        ? { ...app, status: newStatus, review: reviewData }
+        : app
+    ));
+    
+    // Add audit entry
+    addAuditEntry(`application_${decision}`, 
+      `${decision.charAt(0).toUpperCase() + decision.slice(1)}ed application ${application.id}`, 
+      application.id);
+    
+    // Send notifications
+    addNotification('success', 'Application Updated', 
+      `Application ${application.id} has been ${decision}ed`, application.id);
+    
+    // Send email notification to applicant
+    sendEmailNotification(
+      `${application.applicant}@example.com`,
+      `Application ${application.id} ${decision.charAt(0).toUpperCase() + decision.slice(1)}ed`,
+      `Your application ${application.id} has been ${decision}ed. Please check the system for details.`,
+      application.id
+    );
+    
+    // Generate PDF report
+    generatePDF('Decision Report', application);
+    
+    // Integrate with external systems if approved
+    if (decision === 'approve' && application.referrals) {
+      application.referrals.forEach(referral => {
+        if (referral.includes('Main Roads')) {
+          integrateWithExternalSystems(application, 'main_roads');
+        }
+        if (referral.includes('Water')) {
+          integrateWithExternalSystems(application, 'water_corp');
+        }
+      });
+    }
   };
 
   // If user is not logged in, show login modal
@@ -927,6 +2730,30 @@ const BuildingApprovalSystem = () => {
                 📋 Applications
               </button>
             )}
+            {hasPermission('review') && (
+              <button
+                onClick={() => setActiveTab('review')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                  activeTab === 'review'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <CheckCircle className="h-4 w-4 inline mr-1" />
+                Review Queue
+              </button>
+            )}
+            <button
+              onClick={() => setActiveTab('forms')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'forms'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <FileText className="h-4 w-4 inline mr-1" />
+              Forms Reference
+            </button>
             <button
               onClick={() => setActiveTab('calendar')}
               className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
@@ -939,24 +2766,51 @@ const BuildingApprovalSystem = () => {
               Council Calendar
             </button>
             {hasPermission('all') && (
-              <button
-                onClick={() => setActiveTab('analytics')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                  activeTab === 'analytics'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                📈 Analytics
-              </button>
+              <>
+                <button
+                  onClick={() => setActiveTab('users')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                    activeTab === 'users'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  👥 User Management
+                </button>
+                <button
+                  onClick={() => setActiveTab('audit')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                    activeTab === 'audit'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  🔍 Audit Log
+                </button>
+                <button
+                  onClick={() => setActiveTab('analytics')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                    activeTab === 'analytics'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  📈 Analytics
+                </button>
+              </>
             )}
           </nav>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'dashboard' && <DashboardView />}
+        {activeTab === 'dashboard' && <ProductionDashboard />}
         {activeTab === 'applications' && hasPermission('view') && <ApplicationsList />}
+        {activeTab === 'review' && hasPermission('review') && <ReviewQueue />}
+        {activeTab === 'forms' && <FormsReference />}
+        {activeTab === 'users' && hasPermission('all') && <UserManagement />}
+        {activeTab === 'audit' && hasPermission('all') && <AuditLog />}
+        {activeTab === 'analytics' && hasPermission('all') && <Analytics />}
         {activeTab === 'calendar' && (
           <div className="bg-white p-8 rounded-lg shadow-sm border text-center">
             <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -982,135 +2836,9 @@ const BuildingApprovalSystem = () => {
             )}
           </div>
         )}
-        {activeTab === 'analytics' && hasPermission('all') && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">System Analytics</h2>
-            
-            {/* Key Performance Indicators */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <div className="flex items-center">
-                  <div className="bg-blue-100 p-3 rounded-lg">
-                    <FileText className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Monthly Applications</p>
-                    <p className="text-2xl font-bold text-gray-900">127</p>
-                    <p className="text-xs text-green-600">+12% from last month</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <div className="flex items-center">
-                  <div className="bg-green-100 p-3 rounded-lg">
-                    <CheckCircle className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Approval Rate</p>
-                    <p className="text-2xl font-bold text-gray-900">89.3%</p>
-                    <p className="text-xs text-green-600">+2.1% from last month</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <div className="flex items-center">
-                  <div className="bg-yellow-100 p-3 rounded-lg">
-                    <Clock className="h-6 w-6 text-yellow-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Avg. Processing</p>
-                    <p className="text-2xl font-bold text-gray-900">3.8 days</p>
-                    <p className="text-xs text-green-600">-0.4 days improvement</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <div className="flex items-center">
-                  <div className="bg-purple-100 p-3 rounded-lg">
-                    <Users className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">User Satisfaction</p>
-                    <p className="text-2xl font-bold text-gray-900">4.7/5</p>
-                    <p className="text-xs text-green-600">+0.2 improvement</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* System Health */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">System Health</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Server Uptime</span>
-                    <span className="text-sm font-medium text-green-600">99.94%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Database Performance</span>
-                    <span className="text-sm font-medium text-green-600">Excellent</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">API Response Time</span>
-                    <span className="text-sm font-medium text-yellow-600">124ms</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Active Users</span>
-                    <span className="text-sm font-medium text-blue-600">23</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Integration Status</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">WA Planning Portal</span>
-                    <span className="text-sm font-medium text-green-600">Connected</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Main Roads WA</span>
-                    <span className="text-sm font-medium text-green-600">Connected</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Water Corporation</span>
-                    <span className="text-sm font-medium text-yellow-600">Limited</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Western Power</span>
-                    <span className="text-sm font-medium text-green-600">Connected</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Recent Activity Summary */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity Summary</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">47</div>
-                  <div className="text-sm text-gray-600">Applications This Week</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">34</div>
-                  <div className="text-sm text-gray-600">Approvals This Week</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-orange-600">8</div>
-                  <div className="text-sm text-gray-600">Pending Reviews</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
         
         {/* Unauthorized access message */}
-        {!hasPermission('view') && ['applications'].includes(activeTab) && (
+        {!hasPermission('view') && ['applications', 'review'].includes(activeTab) && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-red-900 mb-2">Access Denied</h3>
@@ -1118,7 +2846,7 @@ const BuildingApprovalSystem = () => {
           </div>
         )}
         
-        {!hasPermission('all') && ['analytics'].includes(activeTab) && (
+        {!hasPermission('all') && ['users', 'audit', 'analytics'].includes(activeTab) && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-red-900 mb-2">Administrator Access Required</h3>
@@ -1127,65 +2855,43 @@ const BuildingApprovalSystem = () => {
         )}
       </div>
 
+      {selectedApplication && !showFormCheckerModal && !showSystemReviewModal && (
+        <ApplicationDetail
+          application={selectedApplication}
+          onClose={() => setSelectedApplication(null)}
+        />
+      )}
+      
       {showNewApplicationModal && (
         <NewApplicationModal onClose={() => setShowNewApplicationModal(false)} />
       )}
-
-      {/* Production Footer */}
-      <footer className="bg-gray-800 text-white py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">City of Kalamunda</h3>
-              <p className="text-gray-300 text-sm">
-                Building Approval System v2.0
-                <br />
-                Production Environment
-                <br />
-                Building Act 2011 Compliant
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-semibold mb-4">System Status</h3>
-              <div className="text-sm text-gray-300 space-y-1">
-                <p>🟢 All Systems Operational</p>
-                <p>📊 Uptime: {performanceMetrics.systemUptime}</p>
-                <p>🔒 Security: Enterprise Grade</p>
-                <p>🌐 API Status: Healthy</p>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Contact Support</h3>
-              <div className="text-sm text-gray-300 space-y-1">
-                <p>📞 (08) 9257 9999</p>
-                <p>📧 itsupport@kalamunda.wa.gov.au</p>
-                <p>🕒 Mon-Fri 8:00 AM - 5:00 PM</p>
-                <p>🏢 2 Railway Road, Kalamunda</p>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-              <div className="text-sm text-gray-300 space-y-1">
-                <p>📋 User Manual</p>
-                <p>🔧 System Requirements</p>
-                <p>🔐 Privacy Policy</p>
-                <p>📊 Service Status</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-400">
-            <p>© 2025 City of Kalamunda. All rights reserved. | System administered by IT Department</p>
-            <p className="mt-2">
-              Last System Update: June 21, 2025 | Database Version: 2.1.4 | 
-              {currentUser && ` Logged in as: ${currentUser.fullName} (${userRoles[currentUser.role].name})`}
-            </p>
-          </div>
-        </div>
-      </footer>
+      
+      {showSystemReviewModal && selectedApplication && (
+        <SystemReviewModal
+          application={selectedApplication}
+          onClose={() => {
+            setShowSystemReviewModal(false);
+            setSelectedApplication(null);
+          }}
+          onApplyToFormChecker={(systemResults) => {
+            setShowSystemReviewModal(false);
+            setShowFormCheckerModal(true);
+            // Pass system results to form checker
+            setSelectedApplication(prev => ({ ...prev, systemReviewResults: systemResults }));
+          }}
+        />
+      )}
+      
+      {showFormCheckerModal && selectedApplication && (
+        <FormCheckerModal
+          application={selectedApplication}
+          onClose={() => {
+            setShowFormCheckerModal(false);
+            setSelectedApplication(null);
+          }}
+          systemReviewResults={selectedApplication.systemReviewResults}
+        />
+      )}
     </div>
   );
 };
