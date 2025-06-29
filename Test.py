@@ -1,75 +1,61 @@
 import cv2
 import numpy as np
-import rasterio
+import requests
 from ultralytics import YOLO
 from geopy.distance import geodesic
-import geopandas as gpd
 import matplotlib.pyplot as plt
 
-# --- Step 1: Load Road Detection AI Model ---
-model = YOLO("yolov8n-seg.pt")  # Pre-trained (fine-tune for roads)
+# --- Step 1: Fetch Google Maps Image ---
+def get_google_maps_image(lat, lon, zoom=20, size="640x640", api_key="YOUR_API_KEY"):
+    """Download satellite image from Google Maps Static API"""
+    url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lon}&zoom={zoom}&size={size}&maptype=satellite&key={api_key}"
+    response = requests.get(url)
+    with open("road_image.png", "wb") as f:
+        f.write(response.content)
+    return cv2.imread("road_image.png")
 
-# --- Step 2: Detect Road Edges in Image ---
-def detect_road_edges(image_path):
-    img = cv2.imread(image_path)
-    results = model(img)
-    
-    # Get largest road mask (assuming road is largest segmented object)
-    road_mask = np.zeros_like(img[:,:,0])
-    for mask in results[0].masks:
-        if mask.data.shape[0] > np.sum(road_mask):  # Compare area
-            road_mask = mask.data.cpu().numpy().squeeze().astype(np.uint8)
-    
-    return road_mask
+# --- Step 2: AI Road Segmentation ---
+def detect_road_mask(image):
+    model = YOLO("yolov8n-seg.pt")  # Pre-trained (fine-tune for roads)
+    results = model(image)
+    return results[0].masks[0].data.cpu().numpy().squeeze()  # Largest mask
 
 # --- Step 3: Calculate Road Width ---
-def calculate_road_width(mask, ground_resolution=0.1):
-    """
-    Args:
-        mask: Binary road mask (1=road, 0=non-road)
-        ground_resolution: meters/pixel (e.g., 0.1m for drone imagery)
-    Returns:
-        Average width in meters
-    """
-    # Find edges using Canny
-    edges = cv2.Canny(mask*255, 50, 150)
-    
-    # Get all edge points
+def calculate_width(mask, lat, lon, zoom):
+    # Find edges
+    edges = cv2.Canny((mask*255).astype(np.uint8), 50, 150)
     edge_points = np.column_stack(np.where(edges > 0))
     
-    # Calculate pairwise distances between edge points
-    from scipy.spatial import cKDTree
-    tree = cKDTree(edge_points)
-    distances, _ = tree.query(edge_points, k=2)  # Distance to nearest neighbor
+    # Calculate ground resolution (meters/pixel)
+    # At zoom 20, 1px ≈ 0.1m (varies by latitude)
+    mp_per_px = 156543.03392 * np.cos(lat * np.pi/180) / (2 ** zoom)
     
-    # Filter plausible widths (5-50m typical roads)
-    valid_distances = distances[(distances[:,1] > 5) & (distances[:,1] < 50)]
-    avg_width_pixels = np.median(valid_distances[:,1])
-    
-    return avg_width_pixels * ground_resolution
-
-# --- Step 4: Geospatial Integration ---
-def get_ground_resolution(bbox):
-    """Calculate meters/pixel from image bounds (bbox = [min_lon, min_lat, max_lon, max_lat])"""
-    width_meters = geodesic((bbox[1], bbox[0]), (bbox[1], bbox[2])).meters
-    return width_meters / 1024  # Assuming 1024px image width
+    # Measure perpendicular distances
+    if len(edge_points) > 1:
+        left_edge = edge_points[edge_points[:,1].argmin()]
+        right_edge = edge_points[edge_points[:,1].argmax()]
+        width_px = abs(right_edge[1] - left_edge[1])
+        return width_px * mp_per_px
+    return 0
 
 # --- Execution ---
 if __name__ == "__main__":
-    # Example for Perth road
-    image_path = "perth_road.jpg"
-    bbox = [115.85, -31.95, 115.86, -31.94]  # Image bounding box
+    # Example: Hay Street, Perth
+    lat, lon = -31.9559, 115.8606  # Coordinates
+    zoom = 20  # 19-21 for best results
+    
+    # Get image
+    img = get_google_maps_image(lat, lon, zoom)
     
     # Detect road
-    road_mask = detect_road_edges(image_path)
+    mask = detect_road_mask(img)
     
     # Calculate width
-    resolution = get_ground_resolution(bbox)
-    width = calculate_road_width(road_mask, resolution)
-    
+    width = calculate_width(mask, lat, lon, zoom)
     print(f"Estimated road width: {width:.1f} meters")
-    
+
     # Visualize
-    plt.imshow(road_mask, cmap='gray')
+    plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    plt.imshow(mask, alpha=0.3, cmap='jet')
     plt.title(f"Road Width: {width:.1f}m")
     plt.show()
