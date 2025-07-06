@@ -142,15 +142,52 @@ class MultiModalObstructionDetector:
         }
         
         try:
+            # Debug: Show the full URL being requested
+            full_url = f"{self.satellite_base_url}?" + "&".join([f"{k}={v}" for k, v in params.items()])
+            self.logger.info(f"Requesting satellite image from: {full_url}")
+            
             response = requests.get(self.satellite_base_url, params=params)
+            
+            # Enhanced error handling
+            if response.status_code == 403:
+                error_msg = f"❌ API Access Forbidden (403): Maps Static API might not be enabled or API key lacks permissions"
+                st.error(error_msg)
+                self.logger.error(error_msg)
+                return None
+            elif response.status_code == 400:
+                error_msg = f"❌ Bad Request (400): Check if location '{location}' is valid"
+                st.error(error_msg)
+                self.logger.error(error_msg)
+                return None
+            elif response.status_code == 402:
+                error_msg = f"❌ Payment Required (402): Maps Static API requires billing to be enabled"
+                st.error(error_msg)
+                self.logger.error(error_msg)
+                return None
+            
             response.raise_for_status()
+            
+            # Check if response contains an image
+            content_type = response.headers.get('content-type', '')
+            if 'image' not in content_type:
+                error_msg = f"❌ Response is not an image. Content-Type: {content_type}"
+                st.error(error_msg)
+                self.logger.error(f"Satellite API response content: {response.text[:500]}")
+                return None
             
             image = Image.open(io.BytesIO(response.content))
             self.logger.info(f"Successfully fetched satellite image for location: {location}")
             return image
             
         except requests.exceptions.RequestException as e:
-            self.logger.error(f"Error fetching satellite image: {e}")
+            error_msg = f"❌ Network error fetching satellite image: {e}"
+            st.error(error_msg)
+            self.logger.error(error_msg)
+            return None
+        except Exception as e:
+            error_msg = f"❌ Unexpected error processing satellite image: {e}"
+            st.error(error_msg)
+            self.logger.error(error_msg)
             return None
 
     def create_detection_triangle(self, image_width: int, image_height: int) -> np.ndarray:
@@ -476,6 +513,16 @@ class MultiModalObstructionDetector:
         
         # Satellite Analysis
         satellite_image = self.get_satellite_image(location, zoom=18)
+        if satellite_image is None:
+            # Try hybrid view as fallback
+            self.logger.info("Satellite view failed, trying hybrid view...")
+            satellite_image = self.get_satellite_image(location, zoom=18, maptype="hybrid")
+            
+        if satellite_image is None:
+            # Try lower zoom level
+            self.logger.info("High zoom failed, trying lower zoom...")
+            satellite_image = self.get_satellite_image(location, zoom=16, maptype="satellite")
+            
         if satellite_image is not None:
             satellite_detections = self.detect_objects_yolo(np.array(satellite_image), "satellite", zoom_level=18)
             
@@ -487,6 +534,8 @@ class MultiModalObstructionDetector:
                 obj_type = detection['type']
                 results['satellite_analysis']['object_types'][obj_type] = \
                     results['satellite_analysis']['object_types'].get(obj_type, 0) + 1
+        else:
+            self.logger.warning(f"Could not fetch any satellite imagery for location: {location}")
         
         return results
 
@@ -507,12 +556,25 @@ def main():
     if not api_key:
         st.warning("⚠️ Please enter your Google Maps API key in the sidebar to continue.")
         st.info("""
-        To get a Google Maps API key:
+        **Required APIs for this application:**
+        
+        1. **Street View Static API** - For street-level images
+        2. **Maps Static API** - For satellite imagery
+        
+        **Setup Instructions:**
         1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
         2. Create a new project or select an existing one
-        3. Enable the **Street View Static API** and **Maps Static API**
+        3. **Enable BOTH APIs:**
+           - Street View Static API
+           - Maps Static API
         4. Create credentials (API key)
-        5. Optionally restrict the API key to these APIs
+        5. **Important:** Enable billing for your project (Maps Static API requires billing)
+        6. Optionally restrict the API key to these specific APIs
+        
+        **Common Issues:**
+        - ❌ Only Street View API enabled → Satellite images won't work
+        - ❌ Billing not enabled → 402 Payment Required error
+        - ❌ API key restrictions → 403 Forbidden error
         """)
         return
     
@@ -528,6 +590,31 @@ def main():
     
     multiple_angles = st.sidebar.checkbox("Multiple Street View Angles", value=True)
     satellite_zoom = st.sidebar.slider("Satellite Zoom Level", 15, 20, 18, 1)
+    
+    # API Testing Section
+    st.sidebar.subheader("🔧 API Testing")
+    if st.sidebar.button("Test API Access"):
+        if api_key:
+            test_location = "Times Square, New York, NY"
+            
+            # Test Street View API
+            st.sidebar.write("Testing Street View API...")
+            detector = MultiModalObstructionDetector(api_key)
+            sv_test = detector.get_street_view_image(test_location)
+            if sv_test:
+                st.sidebar.success("✅ Street View API: Working")
+            else:
+                st.sidebar.error("❌ Street View API: Failed")
+            
+            # Test Maps Static API
+            st.sidebar.write("Testing Maps Static API...")
+            sat_test = detector.get_satellite_image(test_location)
+            if sat_test:
+                st.sidebar.success("✅ Maps Static API: Working")
+            else:
+                st.sidebar.error("❌ Maps Static API: Failed")
+        else:
+            st.sidebar.warning("Enter API key first")
     
     # Main input area
     st.header("📍 Location Analysis")
@@ -629,6 +716,57 @@ def main():
                                     st.write(f"**Length:** {detection['estimated_size']['length']}m")
                 else:
                     st.error("❌ Could not fetch satellite imagery for this location.")
+                    
+                    # Troubleshooting section
+                    with st.expander("🔧 Troubleshooting Satellite Image Issues", expanded=True):
+                        st.markdown("""
+                        **Common reasons why satellite images fail to load:**
+                        
+                        **1. API Configuration Issues:**
+                        - ❌ Maps Static API not enabled in Google Cloud Console
+                        - ❌ Only Street View Static API is enabled
+                        - ✅ **Solution:** Enable Maps Static API in Google Cloud Console
+                        
+                        **2. Billing Requirements:**
+                        - ❌ Billing not enabled for your Google Cloud project
+                        - ❌ Maps Static API requires active billing (unlike some other APIs)
+                        - ✅ **Solution:** Enable billing in Google Cloud Console
+                        
+                        **3. API Key Restrictions:**
+                        - ❌ API key restricted to only Street View Static API
+                        - ❌ IP address restrictions blocking requests
+                        - ✅ **Solution:** Update API key restrictions to include Maps Static API
+                        
+                        **4. Location Issues:**
+                        - ❌ Location has no high-resolution satellite imagery
+                        - ❌ Location string not recognized by Google Maps
+                        - ✅ **Solution:** Try a more specific address or different location
+                        
+                        **5. Request Limits:**
+                        - ❌ Exceeded daily quota for Maps Static API
+                        - ❌ Too many requests per second
+                        - ✅ **Solution:** Check quota usage in Google Cloud Console
+                        
+                        **Quick Fix Steps:**
+                        1. Use the "Test API Access" button in the sidebar
+                        2. Check Google Cloud Console for both APIs enabled
+                        3. Verify billing is enabled for your project
+                        4. Try a well-known location like "Times Square, New York"
+                        """)
+                        
+                        st.info("💡 **Tip:** Street View works but satellite doesn't usually means Maps Static API is not enabled or billing is not set up.")
+                    
+                    # Alternative: Show a map placeholder
+                    st.subheader("🗺️ Location Map (Alternative)")
+                    try:
+                        # Create a simple map URL for reference
+                        map_url = f"https://www.google.com/maps/place/{location.replace(' ', '+')}"
+                        st.markdown(f"📍 [View location on Google Maps]({map_url})")
+                        
+                        # You could also use Folium or other mapping libraries here
+                        st.info("Consider using Folium or other mapping libraries as an alternative for basic location visualization.")
+                    except:
+                        pass
             
             # Street View Analysis Tab
             with tab2:
